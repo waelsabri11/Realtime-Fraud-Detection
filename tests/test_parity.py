@@ -7,6 +7,7 @@ from typing import Any
 import fakeredis
 import numpy as np
 import pandas as pd
+import pytest
 
 from fraudrt.data import build_features
 from fraudrt.features.behavioral import add_uid, behavioral_from_events
@@ -68,3 +69,17 @@ def test_uid_normalises_numeric_representation() -> None:
     b = make_uid({"card1": 13926.0, "card2": float("nan"), "card4": "visa", "addr1": 315})
     assert a == b
     assert len(add_uid(make_synthetic(n=50))) == 50
+
+
+def test_anomaly_score_batch_equals_online_row() -> None:
+    from fraudrt.features.anomaly import AnomalyScorer
+
+    raw = make_synthetic(n=1500, n_cards=80, seed=4)
+    off = build_features(raw)
+    scorer = AnomalyScorer(seed=0, n_estimators=30).fit(off)
+    batch = scorer.score_frame(off)
+    rows = _row_dicts(raw)
+    for i in (0, 10, 700, 1499):
+        feats = stateless_features(rows[i])
+        feats.update({c: float(off[c].iloc[i]) for c in BEHAVIORAL})
+        assert scorer.score_row(feats) == pytest.approx(batch[i], rel=1e-9)

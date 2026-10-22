@@ -114,6 +114,29 @@ def reset() -> None:
 
 
 @app.command()
+def semisup(
+    delays: Annotated[str, typer.Option(help="comma separated label delays in days")] = "0,7,30,60",
+    seeds: Annotated[str, typer.Option()] = "42,43,44",
+    methods: Annotated[str, typer.Option()] = "supervised,self_neg,self_negpos,pu,anomaly",
+) -> None:
+    """Semi-supervised experiments under delayed labels (offline, needs MLflow + the data)."""
+    from fraudrt.data import load_features
+    from fraudrt.semisup import run_experiment
+
+    s = get_settings()
+    df = run_experiment(
+        s,
+        load_features(s),
+        [float(x) for x in delays.split(",")],
+        [int(x) for x in seeds.split(",")],
+        tuple(methods.split(",")),
+    )
+    s.results_dir.mkdir(parents=True, exist_ok=True)
+    df.to_csv(s.results_dir / "semisup_runs.csv", index=False)
+    typer.echo(df.groupby(["delay_days", "method"])["pr_auc"].agg(["mean", "std"]).round(4))
+
+
+@app.command()
 def purge_loadtest() -> None:
     """Delete what a load test wrote: Postgres rows with ids >= 900,000,000 and their Redis keys."""
     from sqlalchemy import text

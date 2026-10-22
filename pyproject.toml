@@ -65,7 +65,7 @@ files = ["src", "tests", "loadtest"]
 exclude = ["migrations"]
 
 [[tool.mypy.overrides]]
-module = ["lightgbm.*", "mlflow.*", "confluent_kafka.*", "locust.*", "sklearn.*", "fakeredis.*", "matplotlib.*", "alembic.*"]
+module = ["lightgbm.*", "mlflow.*", "confluent_kafka.*", "locust.*", "sklearn.*", "fakeredis.*", "matplotlib.*", "alembic.*", "joblib.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
