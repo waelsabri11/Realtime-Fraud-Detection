@@ -10,6 +10,7 @@ import pandas as pd
 from fraudrt.config import SECONDS_PER_DAY, Settings
 from fraudrt.features.behavioral import add_uid, behavioral_offline
 from fraudrt.features.definitions import RAW_FIELDS, stateless_features
+from fraudrt.util import records
 
 log = logging.getLogger(__name__)
 
@@ -37,10 +38,8 @@ def build_features(raw: pd.DataFrame, chunk: int = 50_000) -> pd.DataFrame:
     cols = [c for c in RAW_FIELDS if c in raw.columns]
     parts = []
     for start in range(0, len(raw), chunk):
-        recs = raw.iloc[start : start + chunk][cols].astype(object).where(
-            lambda x: x.notna(), None
-        )
-        parts.append(pd.DataFrame([stateless_features(r) for r in recs.to_dict("records")]))
+        recs = records(raw.iloc[start : start + chunk][cols])
+        parts.append(pd.DataFrame([stateless_features(r) for r in recs]))
     feats = pd.concat(parts, ignore_index=True)
     meta = raw[["TransactionID", "TransactionDT", "TransactionAmt"]].reset_index(drop=True)
     meta["uid"] = add_uid(raw).reset_index(drop=True)

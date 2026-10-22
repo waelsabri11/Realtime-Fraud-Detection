@@ -11,13 +11,15 @@ Arr = np.ndarray[Any, Any]
 
 
 def top_fraction_mask(score: Arr, fraction: float) -> Arr:
-    k = max(1, int(round(len(score) * fraction)))
+    k = max(1, round(len(score) * fraction))
     mask = np.zeros(len(score), dtype=bool)
     mask[np.argsort(-score, kind="stable")[:k]] = True
     return mask
 
 
-def evaluate(y: Arr, score: Arr, amount: Arr, budgets: tuple[float, ...] = (0.01, 0.03)) -> dict[str, float]:
+def evaluate(
+    y: Arr, score: Arr, amount: Arr, budgets: tuple[float, ...] = (0.01, 0.03)
+) -> dict[str, float]:
     """PR-AUC / ROC-AUC plus recall, precision and money saved when alerting the top `budget` share."""
     out: dict[str, float] = {
         "n": float(len(y)),
@@ -29,7 +31,7 @@ def evaluate(y: Arr, score: Arr, amount: Arr, budgets: tuple[float, ...] = (0.01
     for b in budgets:
         m = top_fraction_mask(score, b)
         tp = float(y[m].sum())
-        tag = f"{int(round(b * 100))}pct"
+        tag = f"{round(b * 100)}pct"
         out[f"recall_at_{tag}"] = tp / max(1.0, float(y.sum()))
         out[f"precision_at_{tag}"] = tp / max(1, int(m.sum()))
         out[f"money_saved_at_{tag}"] = float((amount * y)[m].sum())

@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 
 from fraudrt.features.definitions import BEHAVIORAL, NAN, WINDOWS_SECONDS, make_uid
+from fraudrt.util import records
 
 W1H, W24H, W7D = (WINDOWS_SECONDS[k] for k in ("1h", "24h", "7d"))
 
@@ -60,10 +61,10 @@ def behavioral_from_events(
 
 def add_uid(df: pd.DataFrame) -> pd.Series[str]:
     """Pseudo-identity for every row, using the same scalar function as the online path."""
-    records = df[["card1", "card2", "card3", "card4", "card5", "card6", "addr1", "P_emaildomain"]]
-    return pd.Series(
-        [make_uid(r) for r in records.to_dict("records")], index=df.index, name="uid", dtype=object
+    recs = records(
+        df[["card1", "card2", "card3", "card4", "card5", "card6", "addr1", "P_emaildomain"]]
     )
+    return pd.Series([make_uid(r) for r in recs], index=df.index, name="uid", dtype=object)
 
 
 def behavioral_offline(df: pd.DataFrame) -> pd.DataFrame:

@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     api_url: str = "http://localhost:8000"
 
     # --- model registry ---
-    mlflow_tracking_uri: str = "http://localhost:5000"
+    mlflow_tracking_uri: str = "http://localhost:5001"
     mlflow_experiment: str = "fraud-detection"
     model_name: str = "fraud-lgbm"
     # registry alias ("champion") or an explicit version number ("3")

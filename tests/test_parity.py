@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import fakeredis
 import numpy as np
 import pandas as pd
@@ -12,10 +14,11 @@ from fraudrt.features.definitions import BEHAVIORAL, FEATURE_COLUMNS, make_uid, 
 from fraudrt.features.encoding import Vocab
 from fraudrt.features.online import RedisFeatureStore
 from fraudrt.synthetic import make_synthetic
+from fraudrt.util import records
 
 
-def _row_dicts(df: pd.DataFrame) -> list[dict[str, object]]:
-    return df.astype(object).where(df.notna(), None).to_dict("records")  # type: ignore[no-any-return]
+def _row_dicts(df: pd.DataFrame) -> list[dict[str, Any]]:
+    return records(df)
 
 
 def test_online_matches_offline_behavioral() -> None:
@@ -26,10 +29,10 @@ def test_online_matches_offline_behavioral() -> None:
     online = []
     for r in rows:
         uid = make_uid(r)
-        ts = int(r["TransactionDT"])  # type: ignore[call-overload]
-        amt = float(r["TransactionAmt"])  # type: ignore[arg-type]
-        online.append(store.get_features(uid, ts, amt))
-        store.update(uid, int(r["TransactionID"]), ts, round(amt * 100))  # type: ignore[call-overload]
+        ts = int(r["TransactionDT"])
+        amt = float(r["TransactionAmt"])
+        online.append(store.read_features(uid, int(r["TransactionID"]), ts, amt)[1])
+        store.update(uid, int(r["TransactionID"]), ts, round(amt * 100))
     on = pd.DataFrame(online)[BEHAVIORAL]
     off = off.sort_values(["TransactionDT", "TransactionID"]).reset_index(drop=True)
     np.testing.assert_allclose(
@@ -55,7 +58,7 @@ def test_stateless_features_match_offline_frame_and_encoding() -> None:
     for i in (0, 17, 250, 499):
         r = _row_dicts(raw)[i]
         feats = stateless_features(r)
-        feats.update(off.loc[i, BEHAVIORAL].to_dict())
+        feats.update({c: float(off[c].iloc[i]) for c in BEHAVIORAL})
         vec = vocab.encode_row(feats)
         np.testing.assert_allclose(vec, enc.iloc[i][FEATURE_COLUMNS].to_numpy(), equal_nan=True)
 

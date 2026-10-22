@@ -57,9 +57,7 @@ def make_synthetic(
     for c in RAW_CATEGORICAL:
         if c in _CATS:
             vals = np.array(_CATS[c] + [None], dtype=object)
-            if c in ("card4", "card6"):
-                df[c] = np.array(_CATS[c], dtype=object)[card % len(_CATS[c])]
-            elif c == "P_emaildomain":
+            if c in ("card4", "card6") or c == "P_emaildomain":
                 df[c] = np.array(_CATS[c], dtype=object)[card % len(_CATS[c])]
             else:
                 df[c] = vals[rng.integers(0, len(vals), size=n)]

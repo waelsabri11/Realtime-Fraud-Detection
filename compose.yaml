@@ -1,0 +1,119 @@
+# Local, simulated real-time stack. Credentials below are throw-away local defaults.
+x-app: &app
+  build: .
+  image: fraudrt:latest
+  environment: &app-env
+    DATABASE_URL: postgresql+psycopg://fraud:fraud@postgres:5432/fraud
+    REDIS_URL: redis://redis:6379/0
+    KAFKA_BOOTSTRAP: redpanda:9092
+    MLFLOW_TRACKING_URI: http://mlflow:5000
+    API_URL: http://api:8000
+    MODEL_NAME: ${MODEL_NAME:-fraud-lgbm}
+    MODEL_VERSION: ${MODEL_VERSION:-champion}
+    LABEL_DELAY_DAYS: ${LABEL_DELAY_DAYS:-7}
+    WORK_DIR: /work
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: fraud
+      POSTGRES_PASSWORD: fraud
+      POSTGRES_DB: fraud
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fraud -d fraud"]
+      interval: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      retries: 20
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.7
+    command:
+      - redpanda
+      - start
+      - --smp=1
+      - --memory=1G
+      - --overprovisioned
+      - --mode=dev-container
+      - --kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr=internal://redpanda:9092,external://localhost:19092
+    ports: ["19092:19092"]
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy:.*true'"]
+      interval: 5s
+      retries: 20
+
+  mlflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.mlflow
+    image: fraudrt-mlflow:latest
+    command: >
+      mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri postgresql://fraud:fraud@postgres:5432/mlflow
+      --artifacts-destination /mlartifacts --serve-artifacts
+    ports: ["5001:5000"]  # 5000 is taken by AirPlay on macOS
+    volumes: ["mlartifacts:/mlartifacts"]
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  migrate:
+    <<: *app
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres: {condition: service_healthy}
+    restart: "no"
+
+  api:
+    <<: *app
+    command: ["fraudrt", "serve", "--workers", "${API_WORKERS:-1}"]
+    ports: ["8000:8000"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+      mlflow: {condition: service_started}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      retries: 20
+
+  worker:
+    <<: *app
+    command: ["fraudrt", "worker"]
+    depends_on:
+      api: {condition: service_started}
+      redpanda: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+    restart: unless-stopped
+
+  # Batch jobs that read the Kaggle CSVs (mounted read-only; never baked into the image).
+  # docker compose --profile jobs run --rm replayer
+  replayer:
+    <<: *app
+    profiles: ["jobs"]
+    command: ["fraudrt", "replay", "--speedup", "${REPLAY_SPEEDUP:-0}"]
+    environment:
+      <<: *app-env
+      IEEE_DATA_DIR: /data
+    volumes:
+      - ${IEEE_DATA_DIR:-~/Projects/ieee-fraud-detection}:/data:ro
+      - workdir:/work
+    depends_on:
+      redpanda: {condition: service_healthy}
+
+volumes:
+  pgdata:
+  mlartifacts:
+  workdir:

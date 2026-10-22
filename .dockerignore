@@ -1,0 +1,13 @@
+.venv
+.git
+work
+data
+tests
+docs
+*.csv
+*.parquet
+mlruns
+mlartifacts
+.mypy_cache
+.ruff_cache
+.pytest_cache

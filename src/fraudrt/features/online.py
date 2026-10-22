@@ -15,6 +15,8 @@ import redis
 from fraudrt.features.behavioral import behavioral_from_events
 from fraudrt.features.definitions import MAX_WINDOW_SECONDS
 
+SEEN_TTL_SECONDS = 86_400
+
 
 class RedisFeatureStore:
     def __init__(self, client: redis.Redis, prefix: str = "fs") -> None:
@@ -27,21 +29,26 @@ class RedisFeatureStore:
     def _last(self, uid: str) -> str:
         return f"{self.prefix}:last:{uid}"
 
-    def get_features(self, uid: str, now: int, amount: float) -> dict[str, float]:
+    def read_features(
+        self, uid: str, txn_id: int, now: int, amount: float
+    ) -> tuple[bool, dict[str, float]]:
+        """One round trip: idempotency marker + history read. Returns (first_time_seen, features).
+
+        The transaction's own entry is excluded, so a redelivered message does not see itself.
+        """
         pipe = self.r.pipeline(transaction=False)
+        pipe.set(f"{self.prefix}:seen:{txn_id}", 1, nx=True, ex=SEEN_TTL_SECONDS)
         pipe.get(self._last(uid))
         pipe.zrangebyscore(self._z(uid), now - MAX_WINDOW_SECONDS, now, withscores=True)
-        last_raw, members = pipe.execute()
+        first, last_raw, members = pipe.execute()
         events: list[tuple[int, int]] = []
         for member, score in members:
             m = member.decode() if isinstance(member, bytes) else member
-            events.append((int(score), int(m.rsplit(":", 1)[1])))
+            tid, cents = m.rsplit(":", 1)
+            if int(tid) != txn_id:
+                events.append((int(score), int(cents)))
         last_ts = int(last_raw) if last_raw is not None else None
-        return behavioral_from_events(now, amount, last_ts, events)
-
-    def mark_seen(self, txn_id: int, ttl_seconds: int = 86_400) -> bool:
-        """True the first time a transaction id is seen."""
-        return bool(self.r.set(f"{self.prefix}:seen:{txn_id}", 1, nx=True, ex=ttl_seconds))
+        return bool(first), behavioral_from_events(now, amount, last_ts, events)
 
     def update(self, uid: str, txn_id: int, ts: int, cents: int) -> None:
         pipe = self.r.pipeline(transaction=False)
