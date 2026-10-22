@@ -263,10 +263,10 @@ PR-AUC: [`semisup_summary.csv`](docs/results/semisup_summary.csv), per-run:
   and fraud $ stopped by the knapsack from 51.9% to 44.4%.
 * **None of the semi-supervised methods beats the supervised baseline outside noise.** Self-training
   is equal or slightly worse (-0.012 at d = 60 for negatives only). The pseudo-labels are decent
-  (pseudo-negatives contain 0.5% to 0.6% frauds, close to the 3.4% prior divided by ~6; capped
+  (pseudo-negatives contain 0.5% to 0.6% frauds against a ~3.4% base rate; capped
   pseudo-positives are 77% to 83% precise, see
-  [`semisup_diagnostics.csv`](docs/results/semisup_diagnostics.csv)) but they add little the model
-  did not already know, and the confident negatives shift the model toward "easy" regions.
+  [`semisup_diagnostics.csv`](docs/results/semisup_diagnostics.csv)) but they carry no information
+  the baseline did not already have (a plausible reading, not tested separately).
 * **PU learning is clearly worse** (0.33 to 0.46). Here the labelled negatives are genuine, so
   treating them as unlabelled throws information away; the estimated label frequency c falls from
   0.37 to 0.09 as the delay grows, i.e. PU's correction is driven by the unlabelled window. PU would
