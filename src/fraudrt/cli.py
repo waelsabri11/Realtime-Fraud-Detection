@@ -67,6 +67,7 @@ def replay(
     from fraudrt.streaming.replayer import replay as do_replay
 
     s = get_settings()
+    t0 = time.perf_counter()
     summary = do_replay(s, speedup=speedup, limit=limit)
     typer.echo(summary)
     if wait:
@@ -74,6 +75,11 @@ def replay(
             typer.echo(f"consumer lag: {lag}")
             time.sleep(5)
         typer.echo("drained")
+        total = time.perf_counter() - t0
+        summary["end_to_end_seconds"] = round(total, 1)
+        summary["end_to_end_txn_per_second"] = round(summary["transactions"] / total, 1)
+        s.results_dir.mkdir(parents=True, exist_ok=True)
+        (s.results_dir / "replay.json").write_text(json.dumps(summary, indent=2))
 
 
 @app.command()
@@ -105,6 +111,21 @@ def reset() -> None:
     RedisFeatureStore(redis.Redis.from_url(s.redis_url), s.feature_prefix).flush()
     delete_topics(s)
     typer.echo("reset done")
+
+
+@app.command()
+def purge_loadtest() -> None:
+    """Delete the synthetic rows a load test wrote (transaction ids >= 900,000,000)."""
+    from sqlalchemy import text
+
+    from fraudrt.db.repo import make_engine
+
+    with make_engine(get_settings().database_url).begin() as conn:
+        for table in ("scores", "transactions"):
+            n = conn.execute(
+                text(f"DELETE FROM {table} WHERE transaction_id >= 900000000")
+            ).rowcount
+            typer.echo(f"{table}: deleted {n}")
 
 
 @app.command()

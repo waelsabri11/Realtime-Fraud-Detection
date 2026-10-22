@@ -35,7 +35,7 @@ def labelled_pool(
     hist = load_features(settings)
     hist = hist[hist["TransactionDT"] < settings.replay_start_dt]
     hist = hist[hist["TransactionDT"] + delay <= as_of_dt]  # label arrived by as_of
-    cols = ["TransactionID", "TransactionDT", "TransactionAmt", "isFraud", *FEATURE_COLUMNS]
+    cols = ["TransactionID", "TransactionDT", "isFraud", *FEATURE_COLUMNS]
     replay = load_replay_frame(engine, settings.replay_start_dt)
     feats = pd.DataFrame([json.loads(s) for s in replay["features"]])
     feats = feats.reindex(columns=FEATURE_COLUMNS)
@@ -45,7 +45,6 @@ def labelled_pool(
         columns={
             "transaction_id": "TransactionID",
             "event_dt": "TransactionDT",
-            "amount": "TransactionAmt",
         }
     ).assign(isFraud=lambda d: d["is_fraud"].astype(int))
     pool = pd.concat([hist[cols], known[cols]], ignore_index=True)

@@ -1,0 +1,12 @@
+{
+  "scenario": "1worker_4users",
+  "requests": 96158,
+  "failures": 0,
+  "throughput_rps": 1657.3,
+  "latency_ms": {
+    "p50": 2.0,
+    "p95": 4.0,
+    "p99": 5.0,
+    "max": 60.577833999559516
+  }
+}

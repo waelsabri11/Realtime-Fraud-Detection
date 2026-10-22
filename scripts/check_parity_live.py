@@ -2,6 +2,7 @@
 
 import json
 import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -30,4 +31,6 @@ res = {
     "rows_fully_matching": float((ok.all(axis=1) & cok.all(axis=1)).mean()),
 }
 print(json.dumps(res, indent=2))
+Path("work/results").mkdir(parents=True, exist_ok=True)
+Path("work/results/parity.json").write_text(json.dumps(res, indent=2))
 sys.exit(0 if res["rows_fully_matching"] == 1.0 else 1)

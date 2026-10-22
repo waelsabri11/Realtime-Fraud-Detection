@@ -1,0 +1,234 @@
+{
+  "model": "fraud-lgbm v1",
+  "n_scored": 105693,
+  "drift": {
+    "score_psi_overall": 0.0007994197456321902,
+    "n_features": 80,
+    "n_significant": 8,
+    "n_moderate": 3,
+    "top_features": [
+      {
+        "feature": "id_31",
+        "psi": 0.6309,
+        "severity": "significant"
+      },
+      {
+        "feature": "M8",
+        "psi": 0.4389,
+        "severity": "significant"
+      },
+      {
+        "feature": "M9",
+        "psi": 0.4389,
+        "severity": "significant"
+      },
+      {
+        "feature": "M7",
+        "psi": 0.4386,
+        "severity": "significant"
+      },
+      {
+        "feature": "D11",
+        "psi": 0.4124,
+        "severity": "significant"
+      },
+      {
+        "feature": "M2",
+        "psi": 0.3587,
+        "severity": "significant"
+      },
+      {
+        "feature": "M3",
+        "psi": 0.3581,
+        "severity": "significant"
+      },
+      {
+        "feature": "M1",
+        "psi": 0.358,
+        "severity": "significant"
+      },
+      {
+        "feature": "uid_secs_since_last",
+        "psi": 0.1708,
+        "severity": "moderate"
+      },
+      {
+        "feature": "D15",
+        "psi": 0.1147,
+        "severity": "moderate"
+      },
+      {
+        "feature": "id_38",
+        "psi": 0.1053,
+        "severity": "moderate"
+      },
+      {
+        "feature": "D10",
+        "psi": 0.0888,
+        "severity": "stable"
+      },
+      {
+        "feature": "C9",
+        "psi": 0.0867,
+        "severity": "stable"
+      },
+      {
+        "feature": "ProductCD",
+        "psi": 0.0769,
+        "severity": "stable"
+      },
+      {
+        "feature": "id_02",
+        "psi": 0.0645,
+        "severity": "stable"
+      }
+    ],
+    "weekly_score": [
+      {
+        "week": 0,
+        "n": 20263,
+        "score_psi": 0.001963851762765544,
+        "mean_score": 0.024558918409798305
+      },
+      {
+        "week": 1,
+        "n": 20967,
+        "score_psi": 0.0006255413277924066,
+        "mean_score": 0.025654039822968204
+      },
+      {
+        "week": 2,
+        "n": 20802,
+        "score_psi": 0.0035445756671737888,
+        "mean_score": 0.028472440311640323
+      },
+      {
+        "week": 3,
+        "n": 20389,
+        "score_psi": 0.008986391230883585,
+        "mean_score": 0.027642281850874015
+      },
+      {
+        "week": 4,
+        "n": 17779,
+        "score_psi": 0.0013022278511803788,
+        "mean_score": 0.029853760013273948
+      },
+      {
+        "week": 5,
+        "n": 5493,
+        "score_psi": 0.005639502568938784,
+        "mean_score": 0.03058483163335493
+      }
+    ],
+    "weekly_behavioral_psi": [
+      {
+        "week": 0,
+        "uid_cnt_1h": 0.0009400338200858729,
+        "uid_cnt_24h": 0.006047258231638049,
+        "uid_cnt_7d": 0.007851618883012383,
+        "uid_sum_24h": 0.00428972238139049,
+        "uid_mean_7d": 0.002462031577920504,
+        "uid_amt_ratio_7d": 0.0023454519258316394,
+        "uid_secs_since_last": 0.1907423572238045
+      },
+      {
+        "week": 1,
+        "uid_cnt_1h": 0.00013627051510701555,
+        "uid_cnt_24h": 0.0007153148648532303,
+        "uid_cnt_7d": 0.00420913155542803,
+        "uid_sum_24h": 0.00015843356020854056,
+        "uid_mean_7d": 0.009045070131255916,
+        "uid_amt_ratio_7d": 0.004422172625588262,
+        "uid_secs_since_last": 0.1575008334416662
+      },
+      {
+        "week": 2,
+        "uid_cnt_1h": 0.002448291806486968,
+        "uid_cnt_24h": 0.0006163062664585506,
+        "uid_cnt_7d": 0.0018901465024118473,
+        "uid_sum_24h": 0.0004892774258926007,
+        "uid_mean_7d": 0.005608034599391113,
+        "uid_amt_ratio_7d": 0.005999481079036191,
+        "uid_secs_since_last": 0.1337728953643788
+      },
+      {
+        "week": 3,
+        "uid_cnt_1h": 0.013065721099921233,
+        "uid_cnt_24h": 0.009847605327776229,
+        "uid_cnt_7d": 0.019772747779047372,
+        "uid_sum_24h": 0.008980848573537717,
+        "uid_mean_7d": 0.03986122062938337,
+        "uid_amt_ratio_7d": 0.02222015102716613,
+        "uid_secs_since_last": 0.20019310592563844
+      },
+      {
+        "week": 4,
+        "uid_cnt_1h": 1.6181881341338977e-05,
+        "uid_cnt_24h": 0.006847736665335874,
+        "uid_cnt_7d": 0.0035157776061372926,
+        "uid_sum_24h": 0.006440199033260313,
+        "uid_mean_7d": 0.006599710128958232,
+        "uid_amt_ratio_7d": 0.005416924135816796,
+        "uid_secs_since_last": 0.20457029312609187
+      },
+      {
+        "week": 5,
+        "uid_cnt_1h": 0.00039683797973030636,
+        "uid_cnt_24h": 0.007476737778454838,
+        "uid_cnt_7d": 0.010925393999986458,
+        "uid_sum_24h": 0.003764365014768769,
+        "uid_mean_7d": 0.012550198724826591,
+        "uid_amt_ratio_7d": 0.009260727235013344,
+        "uid_secs_since_last": 0.2045864771272906
+      }
+    ]
+  },
+  "asof_performance": [
+    {
+      "monitor_day": 153,
+      "scored_in_window": 20263,
+      "labels_known": 0,
+      "label_coverage": 0.0,
+      "frauds_known": 0,
+      "pr_auc_known_labels": null,
+      "pr_auc_eventual": 0.4555
+    },
+    {
+      "monitor_day": 160,
+      "scored_in_window": 41230,
+      "labels_known": 20263,
+      "label_coverage": 0.4915,
+      "frauds_known": 617,
+      "pr_auc_known_labels": 0.4555,
+      "pr_auc_eventual": 0.5011
+    },
+    {
+      "monitor_day": 167,
+      "scored_in_window": 41769,
+      "labels_known": 20967,
+      "label_coverage": 0.502,
+      "frauds_known": 632,
+      "pr_auc_known_labels": 0.5401,
+      "pr_auc_eventual": 0.4975
+    },
+    {
+      "monitor_day": 174,
+      "scored_in_window": 41191,
+      "labels_known": 20802,
+      "label_coverage": 0.505,
+      "frauds_known": 647,
+      "pr_auc_known_labels": 0.4527,
+      "pr_auc_eventual": 0.4683
+    },
+    {
+      "monitor_day": 181,
+      "scored_in_window": 38168,
+      "labels_known": 20389,
+      "label_coverage": 0.5342,
+      "frauds_known": 773,
+      "pr_auc_known_labels": 0.4899,
+      "pr_auc_eventual": 0.4999
+    }
+  ]
+}

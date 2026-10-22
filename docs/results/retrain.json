@@ -1,0 +1,57 @@
+{
+  "as_of_day": 165,
+  "label_delay_days": 7.0,
+  "n_train": 479461,
+  "n_train_from_replay": 0,
+  "challenger_version": "2",
+  "champion_version": "1",
+  "evaluated_on_n": 49630,
+  "evaluated_days": [
+    166,
+    182
+  ],
+  "champion": {
+    "n": 49630.0,
+    "fraud_rate": 0.037920612532742294,
+    "pr_auc": 0.4908859494363168,
+    "roc_auc": 0.8984480224152357,
+    "recall_at_1pct": 0.21147715196599362,
+    "precision_at_1pct": 0.8024193548387096,
+    "money_saved_at_1pct": 34481.27,
+    "money_saved_share_at_1pct": 0.11464424173124783,
+    "recall_at_3pct": 0.44261424017003187,
+    "precision_at_3pct": 0.5594358629952989,
+    "money_saved_at_3pct": 107525.01000000001,
+    "money_saved_share_at_3pct": 0.35750200728090475
+  },
+  "challenger": {
+    "n": 49630.0,
+    "fraud_rate": 0.037920612532742294,
+    "pr_auc": 0.5345055605791477,
+    "roc_auc": 0.9171300674627519,
+    "recall_at_1pct": 0.22157279489904358,
+    "precision_at_1pct": 0.8407258064516129,
+    "money_saved_at_1pct": 54123.21,
+    "money_saved_share_at_1pct": 0.17995028519863365,
+    "recall_at_3pct": 0.47396386822529224,
+    "precision_at_3pct": 0.5990597716588314,
+    "money_saved_at_3pct": 129687.07,
+    "money_saved_share_at_3pct": 0.4311870126157552
+  },
+  "train_metrics": {
+    "val_n": 40723.0,
+    "val_fraud_rate": 0.030351398472607618,
+    "val_pr_auc": 0.6093639302603965,
+    "val_roc_auc": 0.927537865684032,
+    "val_recall_at_1pct": 0.30663430420711973,
+    "val_precision_at_1pct": 0.9312039312039312,
+    "val_money_saved_at_1pct": 39580.338,
+    "val_money_saved_share_at_1pct": 0.22120902621918795,
+    "val_recall_at_3pct": 0.5663430420711975,
+    "val_precision_at_3pct": 0.5728314238952537,
+    "val_money_saved_at_3pct": 87560.739,
+    "val_money_saved_share_at_3pct": 0.4893648409273936,
+    "n_train": 479461.0,
+    "n_val": 40723.0
+  }
+}

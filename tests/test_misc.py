@@ -123,3 +123,19 @@ def test_repository_inserts_are_idempotent() -> None:
     with engine.connect() as c:
         assert c.execute(text("select count(*) from scores")).scalar() == 1
         assert c.execute(text("select count(*) from labels")).scalar() == 1
+
+
+def test_training_is_reproducible(synthetic_raw) -> None:  # type: ignore[no-untyped-def]
+    from fraudrt.features.encoding import Vocab
+    from fraudrt.modeling.train import default_params, fit_booster
+
+    feats = build_features(synthetic_raw)
+    cut = int(len(feats) * 0.8)
+    train, val = feats.iloc[:cut], feats.iloc[cut:]
+    vocab = Vocab.fit(train, min_count=1)
+    params = {**default_params(5), "num_threads": 2, "num_leaves": 15}
+    preds = []
+    for _ in range(2):
+        b = fit_booster(train, val, vocab, params, max_rounds=30, patience=10)
+        preds.append(b.predict(vocab.encode_frame(val)))
+    assert np.array_equal(preds[0], preds[1])
