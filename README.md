@@ -225,6 +225,62 @@ after the retraining date (days 166 to 182, 49,630 transactions, all labels):
 
 A single split, no confidence intervals; the champion was about two months stale at that point.
 
+## Semi-supervised learning under delayed labels
+
+Question: when labels arrive late, can the unlabelled recent transactions help? At the retraining
+time T (start of the replay period) and a label delay *d*, only transactions up to day T - d have a
+label; the *d* most recent days are unlabelled. `fraudrt semisup` trains each method on that
+state and evaluates on the same hold-out as above (days >= 146, 105,693 transactions), 5 seeds per
+cell, every run tracked in MLflow (experiment `semi-supervised-delayed-labels`). Early stopping uses
+the newest 21 labelled days. Offline experiment: it does not go through the stream.
+
+* **supervised** - LightGBM on the labelled part (baseline).
+* **self_neg / self_negpos** - one round of pseudo-labelling of the unlabelled window with the
+  baseline, isotonic-calibrated on validation: negatives below p = 0.01; for `self_negpos` also
+  positives above p = 0.7, capped at half of the expected frauds in that window (guards against
+  confirmation bias).
+* **pu** - Elkan-Noto PU learning: known frauds vs everything else, scores divided by the estimated
+  label frequency c.
+* **anomaly** - Isolation Forest on the numeric features, fitted on all rows before T without labels,
+  added as a feature (`features/anomaly.py`).
+
+PR-AUC on the hold-out, mean +/- std over 5 seeds:
+
+| delay (labelled / unlabelled rows) | supervised | self_neg | self_negpos | pu | anomaly |
+|---|---|---|---|---|---|
+| 0 d (all labelled) | **0.515 +/- 0.003** | n/a | n/a | 0.456 +/- 0.006 | 0.515 +/- 0.003 |
+| 7 d | 0.506 +/- 0.005 | 0.504 +/- 0.003 | **0.508 +/- 0.004** | 0.434 +/- 0.008 | 0.503 +/- 0.002 |
+| 30 d | **0.485 +/- 0.003** | 0.476 +/- 0.004 | 0.481 +/- 0.005 | 0.378 +/- 0.008 | 0.481 +/- 0.005 |
+| 60 d | 0.461 +/- 0.004 | 0.449 +/- 0.004 | 0.458 +/- 0.003 | 0.333 +/- 0.011 | **0.463 +/- 0.003** |
+
+![semi-supervised](docs/results/semisup.png)
+
+What the runs say (full table incl. ROC-AUC, recall at 3% alerts, knapsack money saved, cold-start
+PR-AUC: [`semisup_summary.csv`](docs/results/semisup_summary.csv), per-run:
+[`semisup_runs.csv`](docs/results/semisup_runs.csv)):
+
+* **Delay hurts, and that is the real effect:** PR-AUC drops from 0.515 (d = 0) to 0.461 (d = 60),
+  and fraud $ stopped by the knapsack from 51.9% to 44.4%.
+* **None of the semi-supervised methods beats the supervised baseline outside noise.** Self-training
+  is equal or slightly worse (-0.012 at d = 60 for negatives only). The pseudo-labels are decent
+  (pseudo-negatives contain 0.5% to 0.6% frauds, close to the 3.4% prior divided by ~6; capped
+  pseudo-positives are 77% to 83% precise, see
+  [`semisup_diagnostics.csv`](docs/results/semisup_diagnostics.csv)) but they add little the model
+  did not already know, and the confident negatives shift the model toward "easy" regions.
+* **PU learning is clearly worse** (0.33 to 0.46). Here the labelled negatives are genuine, so
+  treating them as unlabelled throws information away; the estimated label frequency c falls from
+  0.37 to 0.09 as the delay grows, i.e. PU's correction is driven by the unlabelled window. PU would
+  be the right framing only if many "negatives" were hidden frauds, which this dataset cannot show.
+* **Anomaly score:** +0.002 PR-AUC at d = 60 (about one standard deviation), 0 or slightly negative
+  elsewhere; cold-start PR-AUC (first-seen identities) is also within noise (0.534 vs 0.530 at d = 60).
+  Not significant, so **it is not served by `/score`**. It is implemented as a shared feature
+  definition with batch/online equality tested (`test_anomaly_score_batch_equals_online_row`), so
+  wiring it in later needs only a model trained with it.
+
+Caveats: one split and one retrain time; the retraining time here (day 146) is not the stream
+retrain of the previous section; a small autoencoder was not tried; thresholds (0.01 / 0.7 / cap)
+were fixed in advance and not tuned.
+
 ## Repository layout
 
 ```
@@ -235,7 +291,7 @@ src/fraudrt/
   streaming/     replayer, label-gated worker, Kafka helpers
   db/            SQLAlchemy models, repository         migrations/  Alembic
   monitoring/    PSI drift, label-aware performance, report
-  allocation.py  knapsack + baselines                  retrain.py   known-labels-only retraining
+  semisup.py     semi-supervised experiments    allocation.py  knapsack + baselines                  retrain.py   known-labels-only retraining
   cli.py         `fraudrt` commands                    synthetic.py CI/test data
 tests/           unit, parity, API, allocation, integration (Postgres/Redis in CI)
 loadtest/        Locust                                scripts/     parity, reproducibility, figures
