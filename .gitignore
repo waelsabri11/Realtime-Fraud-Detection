@@ -1,0 +1,20 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+# Competition data must never be committed or redistributed
+data/
+*.csv
+*.parquet
+ieee-fraud-detection/
+# local artefacts
+mlruns/
+mlartifacts/
+work/
+*.log

@@ -1,0 +1,74 @@
+[project]
+name = "fraudrt"
+version = "0.1.0"
+description = "Simulated real-time fraud detection: Redpanda replay, Redis online features, LightGBM + MLflow, FastAPI scoring, Postgres, drift monitoring."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "MIT" }
+dependencies = [
+    "alembic>=1.13",
+    "confluent-kafka>=2.5",
+    "fastapi>=0.115",
+    "lightgbm>=4.5",
+    "mlflow-skinny>=2.16,<3",
+    "numpy>=1.26,<3",
+    "pandas>=2.2,<3",
+    "psycopg[binary]>=3.2",
+    "pyarrow>=16",
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    "redis>=5.0",
+    "scikit-learn>=1.5",
+    "sqlalchemy>=2.0",
+    "typer>=0.12",
+    "uvicorn>=0.30",
+    "httpx>=0.27",
+]
+
+[dependency-groups]
+dev = [
+    "fakeredis>=2.24",
+    "locust>=2.31",
+    "matplotlib>=3.9",
+    "mypy>=1.11",
+    "pandas-stubs",
+    "pre-commit>=3.8",
+    "pytest>=8.3",
+    "pytest-cov>=5",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+fraudrt = "fraudrt.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fraudrt"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "C4", "RUF"]
+ignore = ["B008"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["src", "tests", "loadtest"]
+exclude = ["migrations"]
+
+[[tool.mypy.overrides]]
+module = ["lightgbm.*", "mlflow.*", "confluent_kafka.*", "locust.*", "sklearn.*", "fakeredis.*", "matplotlib.*", "alembic.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = ["integration: needs running Postgres/Redis (set DATABASE_URL / REDIS_URL)"]
