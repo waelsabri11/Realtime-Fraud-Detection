@@ -48,8 +48,9 @@ bootstrap:  ## warm Redis with the history before the replay period
 replay:  ## publish the hold-out period to Redpanda; waits until the worker has drained it
 	uv run fraudrt replay $(if $(SPEEDUP),--speedup $(SPEEDUP),)
 
-parity:  ## features served online == offline features (needs a finished replay)
+parity:  ## features served online == offline features; labels never stored before scoring
 	uv run python scripts/check_parity_live.py
+	uv run python scripts/check_label_gate.py
 
 allocate:
 	uv run fraudrt allocate

@@ -4,6 +4,6 @@
   "simulated_days": 44.0,
   "speedup": 0.0,
   "wall_seconds": 0.2,
-  "end_to_end_seconds": 139.1,
-  "end_to_end_txn_per_second": 759.9
+  "end_to_end_seconds": 129.0,
+  "end_to_end_txn_per_second": 819.1
 }

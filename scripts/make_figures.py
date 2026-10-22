@@ -76,7 +76,15 @@ for f in [
     *SRC.glob("loadtest_*.json"),
     *[
         SRC / f"{n}.json"
-        for n in ("training", "allocation", "monitoring", "retrain", "parity", "replay")
+        for n in (
+            "training",
+            "allocation",
+            "monitoring",
+            "retrain",
+            "parity",
+            "label_gate",
+            "replay",
+        )
     ],
 ]:
     if f.exists():

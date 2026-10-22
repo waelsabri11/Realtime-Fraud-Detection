@@ -6,6 +6,7 @@ import logging
 import math
 import queue
 import threading
+from datetime import UTC, datetime
 from typing import Any, Protocol
 
 from fraudrt.api.scorer import ScoredTransaction
@@ -48,12 +49,14 @@ class BatchWriter:
         if item.duplicate:
             return
         req = item.request
+        now = datetime.now(UTC)  # the moment the score existed, not when the batch is flushed
         tx = {
             "transaction_id": req.transaction_id,
             "event_dt": req.transaction_dt,
             "amount": req.transaction_amt,
             "uid": item.uid,
             "payload": _json_safe(req.to_row()),
+            "received_at": now,
         }
         sc = {
             "transaction_id": req.transaction_id,
@@ -63,6 +66,7 @@ class BatchWriter:
             "expected_loss": item.expected_loss,
             "features": _json_safe(item.features),
             "latency_ms": latency_ms,
+            "scored_at": now,
         }
         try:
             self.q.put_nowait((tx, sc))

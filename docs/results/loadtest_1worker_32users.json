@@ -1,12 +1,12 @@
 {
   "scenario": "1worker_32users",
-  "requests": 100992,
+  "requests": 74135,
   "failures": 0,
-  "throughput_rps": 1740.7,
+  "throughput_rps": 1277.1,
   "latency_ms": {
-    "p50": 17.0,
-    "p95": 26.0,
-    "p99": 74.0,
-    "max": 100.81033400001616
+    "p50": 25.0,
+    "p95": 33.0,
+    "p99": 48.0,
+    "max": 110.30949999985751
   }
 }
