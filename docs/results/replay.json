@@ -1,8 +1,9 @@
 {
   "transactions": 105693,
   "labels": 105693,
+  "simulated_days": 44.0,
   "speedup": 0.0,
-  "end_to_end_seconds": 144.8,
-  "end_to_end_txn_per_second": 729.9,
-  "note": "from `time uv run fraudrt replay` of the final run (includes event building and drain wait)"
+  "wall_seconds": 0.2,
+  "end_to_end_seconds": 139.1,
+  "end_to_end_txn_per_second": 759.9
 }

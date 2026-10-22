@@ -24,7 +24,7 @@ from fraudrt.modeling.train import train_from_frames
 from fraudrt.monitoring.report import load_replay_frame
 
 log = logging.getLogger(__name__)
-VAL_DAYS = 14
+VAL_DAYS = 7
 
 
 def labelled_pool(
@@ -89,6 +89,10 @@ def run_retrain(
         "n_train": int(train_mask.sum()),
         "n_train_from_replay": int(
             (pool.loc[train_mask, "TransactionDT"] >= settings.replay_start_dt).sum()
+        ),
+        "n_val": int(val_mask.sum()),
+        "n_val_from_replay": int(
+            (pool.loc[val_mask, "TransactionDT"] >= settings.replay_start_dt).sum()
         ),
         "challenger_version": version,
         "champion_version": champion.version,

@@ -115,7 +115,7 @@ def reset() -> None:
 
 @app.command()
 def purge_loadtest() -> None:
-    """Delete the synthetic rows a load test wrote (transaction ids >= 900,000,000)."""
+    """Delete what a load test wrote: Postgres rows with ids >= 900,000,000 and their Redis keys."""
     from sqlalchemy import text
 
     from fraudrt.db.repo import make_engine
@@ -126,6 +126,16 @@ def purge_loadtest() -> None:
                 text(f"DELETE FROM {table} WHERE transaction_id >= 900000000")
             ).rowcount
             typer.echo(f"{table}: deleted {n}")
+    import redis
+
+    r = redis.Redis.from_url(get_settings().redis_url)
+    prefix = get_settings().feature_prefix
+    keys = []
+    for pattern in (f"{prefix}:z:900??????|*", f"{prefix}:last:900??????|*", f"{prefix}:seen:9*"):
+        keys += list(r.scan_iter(match=pattern, count=5000))
+    for i in range(0, len(keys), 5000):
+        r.delete(*keys[i : i + 5000])
+    typer.echo(f"redis: deleted {len(keys)} keys")
 
 
 @app.command()
