@@ -53,14 +53,15 @@ def test_replay_events_are_time_ordered_and_labels_delayed() -> None:
     )
 
 
-def test_label_gate() -> None:
+def test_label_gate_uses_the_partition_clock() -> None:
     g = LabelGate()
-    assert not g.due(100)
-    g.advance(150)
-    assert g.due(100)
+    assert not g.due(0, 100)
+    g.advance(0, 150)
+    assert g.due(0, 100)
+    assert not g.due(1, 100)  # another partition being ahead does not release this one
     g.held[("labels", 0)] = (5, 200)
     assert g.resumable() == []
-    g.advance(250)
+    g.advance(0, 250)
     assert g.resumable() == [("labels", 0, 5)]
 
 

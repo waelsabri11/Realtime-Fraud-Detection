@@ -38,24 +38,31 @@ def _score(client: httpx.Client, value: bytes) -> bool:
 
 
 class LabelGate:
-    """Releases a label only once the simulated clock (latest scored event time) has reached it.
+    """Releases a label only once the simulated clock has reached it.
 
-    The labels topic is ordered by availability time within each partition, so a partition is
-    paused at its first not-yet-due label and resumed when the clock moves past it.
+    Transactions and labels share the key (identity), hence the partition index, so the clock is
+    kept per partition: the latest event time scored from that partition. Within a partition,
+    transactions are in time order, so when the clock passes a label's availability time the
+    transaction it belongs to has certainly been scored. The labels topic is ordered by
+    availability time within each partition: a partition is paused at its first not-yet-due label
+    and resumed when its clock moves past it.
     """
 
     def __init__(self) -> None:
-        self.clock = 0
+        self.clock: dict[int, int] = {}
         self.held: dict[tuple[str, int], tuple[int, int]] = {}  # (topic, part) -> (offset, due)
 
-    def advance(self, event_dt: int) -> None:
-        self.clock = max(self.clock, event_dt)
+    def advance(self, partition: int, event_dt: int) -> None:
+        self.clock[partition] = max(self.clock.get(partition, 0), event_dt)
 
-    def due(self, available_dt: int) -> bool:
-        return available_dt <= self.clock
+    def due(self, partition: int, available_dt: int) -> bool:
+        return available_dt <= self.clock.get(partition, 0)
 
     def resumable(self) -> list[tuple[str, int, int]]:
-        return [(t, p, off) for (t, p), (off, due) in self.held.items() if self.due(due)]
+        return [(t, p, off) for (t, p), (off, due) in self.held.items() if self.due(p, due)]
+
+    def max_day(self) -> float:
+        return max(self.clock.values(), default=0) / 86_400
 
 
 def run_worker(settings: Settings, stop_after_idle_seconds: float | None = None) -> None:
@@ -115,14 +122,14 @@ def run_worker(settings: Settings, stop_after_idle_seconds: float | None = None)
                 if topic == settings.topic_transactions:
                     payload = json.loads(value)
                     if "clock" in payload:  # end-of-replay tick: time passes without traffic
-                        gate.advance(int(payload["clock"]))
+                        gate.advance(part, int(payload["clock"]))
                     else:
                         _score(client, value)
-                        gate.advance(int(payload["transaction_dt"]))
+                        gate.advance(part, int(payload["transaction_dt"]))
                         scored += 1
                 else:
                     label = json.loads(value)
-                    if not gate.due(label["available_dt"]):
+                    if not gate.due(part, label["available_dt"]):
                         blocked.add(key)
                         gate.held[key] = (offset, label["available_dt"])
                         consumer.pause([TopicPartition(topic, part)])
@@ -142,7 +149,7 @@ def run_worker(settings: Settings, stop_after_idle_seconds: float | None = None)
                     "scored=%d labels=%d clock_day=%.1f (%.0f txn/s)",
                     scored,
                     labelled,
-                    gate.clock / 86_400,
+                    gate.max_day(),
                     scored / (time.perf_counter() - t0),
                 )
     finally:
