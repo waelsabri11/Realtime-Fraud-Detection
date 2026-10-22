@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 from typing import Annotated, Any
 
 import redis
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 
 from fraudrt.api.schemas import HealthResponse, ModelInfo, ScoreRequest, ScoreResponse
 from fraudrt.api.scorer import Scorer
@@ -89,18 +89,14 @@ def create_app(
         title="Real-time fraud scoring (replay-simulated)", version="0.1.0", lifespan=lifespan
     )
 
-    def get_holder(request: Request) -> ModelHolder:
-        holder: ModelHolder = request.app.state.holder
-        return holder
-
     @app.post("/score", response_model=ScoreResponse, response_model_exclude_none=True)
     def score(
         req: ScoreRequest,
         request: Request,
-        holder: Annotated[ModelHolder, Depends(get_holder)],
         include_features: Annotated[bool, Query()] = False,
     ) -> ScoreResponse:
         t0 = time.perf_counter()
+        holder: ModelHolder = request.app.state.holder
         model = holder.bundle
         if model is None:
             raise HTTPException(status_code=503, detail="model not loaded")
@@ -151,7 +147,8 @@ def create_app(
         )
 
     @app.post("/admin/reload")
-    def reload_model(holder: Annotated[ModelHolder, Depends(get_holder)]) -> dict[str, Any]:
+    def reload_model(request: Request) -> dict[str, Any]:
+        holder: ModelHolder = request.app.state.holder
         ok = holder.try_load()
         b = holder.bundle
         return {"reloaded": ok, "version": b.version if b else None}
@@ -164,4 +161,7 @@ def _features_out(feats: dict[str, Any]) -> dict[str, float | str | None]:
 
 
 def app_factory() -> FastAPI:  # `uvicorn fraudrt.api.app:app_factory --factory`
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+    )
     return create_app()

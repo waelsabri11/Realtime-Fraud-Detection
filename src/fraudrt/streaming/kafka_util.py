@@ -21,6 +21,8 @@ def ensure_topics(settings: Settings) -> None:
         for t in (settings.topic_transactions, settings.topic_labels)
         if t not in existing
     ]
+    if not new:
+        return
     for t, fut in admin.create_topics(new).items():
         fut.result()
         log.info("created topic %s", t)

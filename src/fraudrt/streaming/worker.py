@@ -8,7 +8,7 @@ import time
 from typing import Any
 
 import httpx
-from confluent_kafka import Consumer, KafkaError, Message
+from confluent_kafka import Consumer, KafkaError, Message, TopicPartition
 
 from fraudrt.config import Settings
 from fraudrt.db.repo import Repository, make_engine
@@ -37,6 +37,27 @@ def _score(client: httpx.Client, value: bytes) -> bool:
         delay = min(delay * 2, 10)
 
 
+class LabelGate:
+    """Releases a label only once the simulated clock (latest scored event time) has reached it.
+
+    The labels topic is ordered by availability time within each partition, so a partition is
+    paused at its first not-yet-due label and resumed when the clock moves past it.
+    """
+
+    def __init__(self) -> None:
+        self.clock = 0
+        self.held: dict[tuple[str, int], tuple[int, int]] = {}  # (topic, part) -> (offset, due)
+
+    def advance(self, event_dt: int) -> None:
+        self.clock = max(self.clock, event_dt)
+
+    def due(self, available_dt: int) -> bool:
+        return available_dt <= self.clock
+
+    def resumable(self) -> list[tuple[str, int, int]]:
+        return [(t, p, off) for (t, p), (off, due) in self.held.items() if self.due(due)]
+
+
 def run_worker(settings: Settings, stop_after_idle_seconds: float | None = None) -> None:
     ensure_topics(settings)
     repo = Repository(make_engine(settings.database_url))
@@ -54,12 +75,18 @@ def run_worker(settings: Settings, stop_after_idle_seconds: float | None = None)
         timeout=settings.api_timeout_seconds,
         limits=httpx.Limits(max_keepalive_connections=4),
     )
+    gate = LabelGate()
     scored = labelled = 0
     t0 = time.perf_counter()
     last_msg = time.perf_counter()
     log.info("worker started: %s -> %s", settings.kafka_bootstrap, settings.api_url)
     try:
         while True:
+            for t, p, off in gate.resumable():
+                tp = TopicPartition(t, p, off)
+                consumer.seek(tp)
+                consumer.resume([tp])
+                del gate.held[(t, p)]
             msgs: list[Message] = consumer.consume(num_messages=200, timeout=1.0)
             if not msgs:
                 if (
@@ -70,29 +97,52 @@ def run_worker(settings: Settings, stop_after_idle_seconds: float | None = None)
                 continue
             last_msg = time.perf_counter()
             labels: list[dict[str, Any]] = []
+            commits: dict[tuple[str, int], int] = {}
+            blocked: set[tuple[str, int]] = set()
             for m in msgs:
+                topic, part, offset = m.topic(), m.partition(), m.offset()
+                if topic is None or part is None or offset is None:
+                    continue
+                key = (topic, part)
                 err = m.error()
                 if err is not None:
                     if err.code() != KafkaError._PARTITION_EOF:
                         log.error("kafka error: %s", err)
                     continue
                 value = m.value()
-                if value is None:
+                if value is None or key in blocked:
                     continue
-                if m.topic() == settings.topic_transactions:
-                    _score(client, value)
-                    scored += 1
+                if topic == settings.topic_transactions:
+                    payload = json.loads(value)
+                    if "clock" in payload:  # end-of-replay tick: time passes without traffic
+                        gate.advance(int(payload["clock"]))
+                    else:
+                        _score(client, value)
+                        gate.advance(int(payload["transaction_dt"]))
+                        scored += 1
                 else:
-                    labels.append(json.loads(value))
+                    label = json.loads(value)
+                    if not gate.due(label["available_dt"]):
+                        blocked.add(key)
+                        gate.held[key] = (offset, label["available_dt"])
+                        consumer.pause([TopicPartition(topic, part)])
+                        continue
+                    labels.append(label)
+                commits[key] = offset + 1
             if labels:
                 repo.save_labels(labels)
                 labelled += len(labels)
-            consumer.commit(asynchronous=False)
+            if commits:
+                consumer.commit(
+                    offsets=[TopicPartition(t, p, o) for (t, p), o in commits.items()],
+                    asynchronous=False,
+                )
             if scored and scored // 5000 != (scored - len(msgs)) // 5000:
                 log.info(
-                    "scored=%d labels=%d (%.0f txn/s)",
+                    "scored=%d labels=%d clock_day=%.1f (%.0f txn/s)",
                     scored,
                     labelled,
+                    gate.clock / 86_400,
                     scored / (time.perf_counter() - t0),
                 )
     finally:

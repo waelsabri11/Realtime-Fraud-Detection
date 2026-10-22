@@ -82,6 +82,10 @@ def replay(settings: Settings, speedup: float = 0.0, limit: int | None = None) -
             n_lab += 1
         if i % 1000 == 0:
             producer.poll(0)
+    # time keeps passing after the last transaction: tick every partition so pending labels release
+    tick = json.dumps({"clock": events[-1][0]}).encode()
+    for part in range(settings.topic_partitions):
+        producer.produce(settings.topic_transactions, value=tick, partition=part)
     producer.flush()
     wall = time.perf_counter() - wall0
     summary = {
