@@ -56,9 +56,11 @@ flowchart LR
   days 110 to < 139 (used for early stopping only), replay = days >= 146. The 7-day gaps exist so
   no training label is one that would not yet have been known when training would have run.
 * **Delayed labels are enforced, not just stored.** The worker releases a label only once the
-  simulated clock (latest scored event time) has reached `available_dt`; the monitoring job and the
-  retraining job select `available_dt <= as_of`. In the final run, 0 of 105,693 labels reached
-  Postgres before their transaction had been scored.
+  simulated clock of its partition (latest scored event time) has reached `available_dt`; the
+  monitoring and retraining jobs select `available_dt <= as_of`. `make parity` also checks, from
+  Postgres, that `available_dt = TransactionDT + delay` for all 105,693 labels and that none was
+  stored before its transaction had been scored (0 violations in the final run;
+  [`label_gate.json`](docs/results/label_gate.json)).
 * **Alert allocation** is a 0/1 knapsack: maximise Σ p·amount subject to a daily capacity of review
   units, where a high-amount case (>= $500) costs 2 units (needs a senior analyst) and others cost 1.
   It is compared with the usual "top-k by score" and with "greedy by expected loss", plus an oracle
@@ -87,7 +89,7 @@ make loadtest            # Locust against /score, 60 s
 ```
 
 `make demo` chains `up train bootstrap replay parity allocate monitor retrain figures`.
-A cold run (images cached) takes about 3.5 minutes on a 12-core Apple-silicon laptop.
+A cold run (images cached) takes about 4 minutes on a 12-core Apple-silicon laptop.
 `make check` runs ruff, mypy and pytest. UIs: MLflow http://localhost:5001 (port 5000 is taken by
 AirPlay on macOS), API docs http://localhost:8000/docs.
 
@@ -136,17 +138,18 @@ what the feature-parity result below implies.
 * **Online/offline parity:** all 105,693 replayed transactions: 100% of numeric and categorical
   feature cells served by the API equal the offline feature table (`rtol 1e-9`).
 * **Replay throughput:** 105,693 transactions + 105,693 labels through Redpanda -> worker -> API ->
-  Postgres in 129 s end to end (about 819 txn/s; the worker calls `/score` sequentially, so this is
-  consumer-bound, not a limit of the API).
+  Postgres in 154 s end to end (about 685 txn/s; the worker calls `/score` sequentially, so this is
+  consumer-bound, not a limit of the API). Pacing works too: with `--speedup 20000`, 500
+  transactions spanning 7.2 simulated days took 31 s of wall time.
 * **Server-side latency during the replay** (time inside the handler: features, Redis, model,
-  excludes network and JSON parsing): p50 0.35 ms, p95 0.58 ms, p99 1.04 ms.
+  excludes network and JSON parsing): p50 0.41 ms, p95 0.70 ms, p99 1.16 ms.
 * **Load test** (Locust, 60 s, 1 uvicorn worker in Docker, Locust on the same laptop; payloads are
   synthetic IEEE-shaped requests; includes Redis writes and batched Postgres inserts):
 
 | scenario | requests | failures | throughput | p50 | p95 | p99 |
 |---|---|---|---|---|---|---|
-| 4 concurrent users | 74,960 | 0 | 1,292 req/s | 3 ms | 4 ms | 5 ms |
-| 32 concurrent users (saturated) | 74,135 | 0 | 1,277 req/s | 25 ms | 33 ms | 48 ms |
+| 4 concurrent users | 74,694 | 0 | 1,287 req/s | 3 ms | 4 ms | 5 ms |
+| 32 concurrent users (saturated) | 78,587 | 0 | 1,354 req/s | 23 ms | 32 ms | 72 ms |
 
 At saturation the extra latency is queueing in front of a single worker. These are client-side
 figures from Locust (millisecond resolution), so they include HTTP overhead on loopback.

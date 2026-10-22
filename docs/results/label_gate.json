@@ -1,5 +1,5 @@
 {
   "labels": 105693,
   "available_dt_equals_event_dt_plus_delay": true,
-  "labels_stored_before_their_transaction_was_scored": 5955
+  "labels_stored_before_their_transaction_was_scored": 0
 }
