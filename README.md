@@ -281,6 +281,18 @@ Caveats: one split and one retrain time; the retraining time here (day 146) is n
 retrain of the previous section; a small autoencoder was not tried; thresholds (0.01 / 0.7 / cap)
 were fixed in advance and not tuned.
 
+## Governance
+
+* [Model card](docs/MODEL_CARD.md): intended use (decision support with a human in the loop, not
+  automatic blocking), measured performance, segment error analysis, monitoring, retraining, and
+  risks with mitigations.
+* [Data card](docs/DATA_CARD.md): IEEE-CIS source and terms, splits, anonymised columns, label
+  definition and known biases, privacy notes.
+
+IEEE-CIS has no protected attributes, so fairness on protected groups cannot be assessed here; the
+segment table in the model card ([`segment_errors.json`](docs/results/segment_errors.json),
+`scripts/segment_errors.py`) is a proxy, not a fairness audit.
+
 ## Repository layout
 
 ```
