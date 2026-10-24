@@ -1,0 +1,292 @@
+{
+  "alert_rate": 0.03,
+  "overall": {
+    "n": 105693,
+    "frauds": 3611,
+    "alerts": 3171,
+    "recall": 0.4605372472999169,
+    "precision": 0.5244402396720278,
+    "fpr": 0.014772437844086127
+  },
+  "segments": {
+    "ProductCD": [
+      {
+        "segment": "C",
+        "n": 10988,
+        "frauds": 1460,
+        "fraud_rate": 0.1328722242446305,
+        "alerts": 1735,
+        "alert_rate": 0.1578995267564616,
+        "recall": 0.7424657534246575,
+        "precision": 0.6247838616714697,
+        "fpr": 0.06832493702770781,
+        "low_support": false
+      },
+      {
+        "segment": "H",
+        "n": 3017,
+        "frauds": 185,
+        "fraud_rate": 0.06131919124958568,
+        "alerts": 245,
+        "alert_rate": 0.08120649651972157,
+        "recall": 0.5459459459459459,
+        "precision": 0.4122448979591837,
+        "fpr": 0.05084745762711865,
+        "low_support": false
+      },
+      {
+        "segment": "R",
+        "n": 4983,
+        "frauds": 242,
+        "fraud_rate": 0.04856512141280353,
+        "alerts": 273,
+        "alert_rate": 0.054786273329319686,
+        "recall": 0.7396694214876033,
+        "precision": 0.6556776556776557,
+        "fpr": 0.019827040708711243,
+        "low_support": false
+      },
+      {
+        "segment": "S",
+        "n": 3310,
+        "frauds": 181,
+        "fraud_rate": 0.054682779456193355,
+        "alerts": 88,
+        "alert_rate": 0.026586102719033233,
+        "recall": 0.35911602209944754,
+        "precision": 0.7386363636363636,
+        "fpr": 0.007350591243208693,
+        "low_support": false
+      },
+      {
+        "segment": "W",
+        "n": 83395,
+        "frauds": 1543,
+        "fraud_rate": 0.01850230829186402,
+        "alerts": 830,
+        "alert_rate": 0.009952635050062953,
+        "recall": 0.15165262475696695,
+        "precision": 0.2819277108433735,
+        "fpr": 0.007281434784733421,
+        "low_support": false
+      }
+    ],
+    "card4": [
+      {
+        "segment": "american express",
+        "n": 1020,
+        "frauds": 30,
+        "fraud_rate": 0.029411764705882353,
+        "alerts": 41,
+        "alert_rate": 0.04019607843137255,
+        "recall": 0.6,
+        "precision": 0.43902439024390244,
+        "fpr": 0.023232323232323233,
+        "low_support": false
+      },
+      {
+        "segment": "discover",
+        "n": 1134,
+        "frauds": 93,
+        "fraud_rate": 0.082010582010582,
+        "alerts": 112,
+        "alert_rate": 0.09876543209876543,
+        "recall": 0.40860215053763443,
+        "precision": 0.3392857142857143,
+        "fpr": 0.07108549471661864,
+        "low_support": false
+      },
+      {
+        "segment": "mastercard",
+        "n": 34385,
+        "frauds": 1082,
+        "fraud_rate": 0.03146720953904319,
+        "alerts": 1055,
+        "alert_rate": 0.030681983423004218,
+        "recall": 0.5203327171903882,
+        "precision": 0.533649289099526,
+        "fpr": 0.014773443833888839,
+        "low_support": false
+      },
+      {
+        "segment": "missing",
+        "n": 744,
+        "frauds": 15,
+        "fraud_rate": 0.020161290322580645,
+        "alerts": 21,
+        "alert_rate": 0.028225806451612902,
+        "recall": 0.6666666666666666,
+        "precision": 0.47619047619047616,
+        "fpr": 0.015089163237311385,
+        "low_support": true
+      },
+      {
+        "segment": "visa",
+        "n": 68410,
+        "frauds": 2391,
+        "fraud_rate": 0.03495103055108902,
+        "alerts": 1942,
+        "alert_rate": 0.02838766262242362,
+        "recall": 0.43245503973232957,
+        "precision": 0.5324407826982492,
+        "fpr": 0.013753616383162423,
+        "low_support": false
+      }
+    ],
+    "card6": [
+      {
+        "segment": "credit",
+        "n": 24474,
+        "frauds": 1553,
+        "fraud_rate": 0.06345509520307265,
+        "alerts": 1667,
+        "alert_rate": 0.06811309961591894,
+        "recall": 0.5737282678686413,
+        "precision": 0.5344931013797241,
+        "fpr": 0.033855416430347715,
+        "low_support": false
+      },
+      {
+        "segment": "debit",
+        "n": 80476,
+        "frauds": 2043,
+        "fraud_rate": 0.025386450618818033,
+        "alerts": 1483,
+        "alert_rate": 0.01842785426711069,
+        "recall": 0.37298091042584436,
+        "precision": 0.5138233310856373,
+        "fpr": 0.009192559254395471,
+        "low_support": false
+      },
+      {
+        "segment": "missing",
+        "n": 743,
+        "frauds": 15,
+        "fraud_rate": 0.020188425302826378,
+        "alerts": 21,
+        "alert_rate": 0.02826379542395693,
+        "recall": 0.6666666666666666,
+        "precision": 0.47619047619047616,
+        "fpr": 0.01510989010989011,
+        "low_support": true
+      }
+    ],
+    "DeviceType": [
+      {
+        "segment": "desktop",
+        "n": 12424,
+        "frauds": 977,
+        "fraud_rate": 0.0786381197681906,
+        "alerts": 1173,
+        "alert_rate": 0.09441403734707018,
+        "recall": 0.7389969293756398,
+        "precision": 0.6155157715260017,
+        "fpr": 0.03939896916222591,
+        "low_support": false
+      },
+      {
+        "segment": "missing",
+        "n": 84514,
+        "frauds": 1613,
+        "fraud_rate": 0.01908559528598812,
+        "alerts": 901,
+        "alert_rate": 0.010660955581323805,
+        "recall": 0.16367017978921264,
+        "precision": 0.293007769145394,
+        "fpr": 0.007683863885839737,
+        "low_support": false
+      },
+      {
+        "segment": "mobile",
+        "n": 8755,
+        "frauds": 1021,
+        "fraud_rate": 0.11661907481439178,
+        "alerts": 1097,
+        "alert_rate": 0.12529982866933181,
+        "recall": 0.66307541625857,
+        "precision": 0.6171376481312671,
+        "fpr": 0.05430566330488751,
+        "low_support": false
+      }
+    ],
+    "amount_bucket": [
+      {
+        "segment": "<25",
+        "n": 7708,
+        "frauds": 587,
+        "fraud_rate": 0.07615464452516865,
+        "alerts": 747,
+        "alert_rate": 0.09691229891022314,
+        "recall": 0.696763202725724,
+        "precision": 0.5475234270414994,
+        "fpr": 0.0474652436455554,
+        "low_support": false
+      },
+      {
+        "segment": "25-50",
+        "n": 26113,
+        "frauds": 823,
+        "fraud_rate": 0.031516868992455864,
+        "alerts": 612,
+        "alert_rate": 0.023436602458545553,
+        "recall": 0.48724179829890646,
+        "precision": 0.6552287581699346,
+        "fpr": 0.008343218663503361,
+        "low_support": false
+      },
+      {
+        "segment": "50-100",
+        "n": 28468,
+        "frauds": 776,
+        "fraud_rate": 0.02725867640859913,
+        "alerts": 573,
+        "alert_rate": 0.02012786286356611,
+        "recall": 0.3711340206185567,
+        "precision": 0.5026178010471204,
+        "fpr": 0.01029178101978911,
+        "low_support": false
+      },
+      {
+        "segment": "100-250",
+        "n": 31903,
+        "frauds": 870,
+        "fraud_rate": 0.027270162680625647,
+        "alerts": 761,
+        "alert_rate": 0.023853556091903583,
+        "recall": 0.39195402298850573,
+        "precision": 0.4480946123521682,
+        "fpr": 0.01353397995682016,
+        "low_support": false
+      },
+      {
+        "segment": "250-500",
+        "n": 7012,
+        "frauds": 320,
+        "fraud_rate": 0.045636052481460354,
+        "alerts": 307,
+        "alert_rate": 0.043782087849401026,
+        "recall": 0.490625,
+        "precision": 0.511400651465798,
+        "fpr": 0.022414823670053794,
+        "low_support": false
+      },
+      {
+        "segment": ">=500",
+        "n": 4489,
+        "frauds": 235,
+        "fraud_rate": 0.05235018935174872,
+        "alerts": 171,
+        "alert_rate": 0.038093116507017154,
+        "recall": 0.2851063829787234,
+        "precision": 0.391812865497076,
+        "fpr": 0.024447578749412318,
+        "low_support": false
+      }
+    ]
+  },
+  "model": {
+    "best_iteration": 378,
+    "holdout_pr_auc": 0.48989521759147264,
+    "matches_training_json": true
+  }
+}
