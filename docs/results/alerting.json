@@ -6,10 +6,18 @@
     "psi_window": 5000,
     "scrape_interval_s": 5,
     "rule_evaluation_interval_s": 5,
-    "rule_for_s": 30,
     "alertmanager_group_wait_s": 5,
     "drift_refresh_interval_s": 5,
-    "machine": "arm64 Darwin 24.3.0"
+    "machine": "arm64 Darwin 24.3.0",
+    "rule_for_s": {
+      "ScorePSIModerate": 30,
+      "ScorePSISignificant": "10 (30 in the email_domain_all_protonmail_critical_for30s scenario)"
+    },
+    "notes": [
+      "t_inject = wall-clock time the replayer handed the first drifted transaction to the Kafka producer; all later timestamps are host wall-clock.",
+      "seconds_to_issue_written is the dry-run receiver finishing the issue file; a real GitHub API call would add its own latency (not measured).",
+      "Reference: PSI of the last 5000 scores vs the model's training reference. 16 runs, PSI before injection never exceeded 0.0034 and no alert was active before injection."
+    ]
   },
   "scenarios": {
     "amount_x2": {
@@ -628,6 +636,194 @@
         "ScorePSIModerate": "# [alert] ScorePSIModerate: score distribution drifted (PSI above 0.1)\n\nlabels: monitoring, alert:ScorePSIModerate\n\n---\n\n<!-- fraudrt-alert:ScorePSIModerate -->\n**Alert `ScorePSIModerate`** (warning) fired at `2026-10-27T11:21:50.63Z`; this issue was opened at `2026-10-27T11:21:55.661Z`.\n\nscore distribution drifted (PSI above 0.1)\n\nPSI of the last 5000 scores against the training reference is in the moderate band 0.1 to 0.25.\n\n### Values\n\n* value that triggered the rule: **0.156**\n* rule window: rolling window of 5000 transactions, for 30s\n* time window of interest: `2026-10-27T11:21:50.63Z` to `2026-10-27T11:21:55.661Z`\n\n### Readings when the alert arrived\n\n| metric | value |\n|---|---|\n| score PSI (rolling window) | 0.1283 |\n| alert rate (share of scored transactions) | 0.03939 |\n| p99 /score latency (s) | 0.009753 |\n| 5xx ratio | n/a |\n| consumer lag, transactions topic | 39 |\n| requests per second | 124.5 |\n\n### Features with the highest PSI now (rolling window vs training reference)\n\n| feature | PSI |\n|---|---|\n| `P_emaildomain` | 16.081 |\n| `dow` | 5.219 |\n| `uid_secs_since_last` | 1.579 |\n| `email_match` | 1.567 |\n| `id_31` | 0.887 |\n\nSome features sit above 0.25 even in normal operation (see `docs/MODEL_CARD.md`), so compare with the table below.\n\n[Dashboard](http://localhost:3000/d/fraud-monitoring/fraud-monitoring?from=1793099210630&to=1793100415661)\n[Rule expression in Prometheus](http://4f95eb8a4fe6:9090/graph?g0.expr=fraud_score_psi+%3E+0.1+and+fraud_score_psi+%3C%3D+0.25&g0.tab=1)\n"
       },
       "note": "First version of the rules: ScorePSISignificant had for: 30s. PSI stayed above 0.25 for less than 30 s in all 3 runs (peak ~0.35), so the critical alert went pending but never fired. Kept for transparency; the rule was then changed to for: 10s and the scenario re-run (see email_domain_all_protonmail)."
+    },
+    "email_domain_all_protonmail": {
+      "drift": {
+        "field": "p_emaildomain",
+        "value": "protonmail.com",
+        "fraction": 1.0
+      },
+      "runs": [
+        {
+          "drift": {
+            "field": "p_emaildomain",
+            "value": "protonmail.com",
+            "fraction": 1.0
+          },
+          "t_inject_unix": 1793101738.555,
+          "psi_before_injection_max": 0.0021,
+          "psi_max_after_injection": 0.3485,
+          "alerts": {
+            "ScorePSIModerate": {
+              "seconds_to_psi_gauge_above_threshold": 27.7,
+              "seconds_to_alert_pending": 27.1,
+              "seconds_to_alert_firing_observed": 107.1,
+              "seconds_to_webhook_received": 112.1,
+              "seconds_to_issue_written": 112.1,
+              "issue_files": [
+                "ScorePSIModerate.md"
+              ],
+              "events": [
+                "created"
+              ]
+            },
+            "ScorePSISignificant": {
+              "seconds_to_psi_gauge_above_threshold": 42.7,
+              "seconds_to_alert_pending": 42.1,
+              "seconds_to_alert_firing_observed": 52.4,
+              "seconds_to_webhook_received": 57.1,
+              "seconds_to_issue_written": 57.1,
+              "issue_files": [
+                "ScorePSISignificant.md"
+              ],
+              "events": [
+                "created"
+              ]
+            }
+          },
+          "alerts_active_before_injection": []
+        },
+        {
+          "drift": {
+            "field": "p_emaildomain",
+            "value": "protonmail.com",
+            "fraction": 1.0
+          },
+          "t_inject_unix": 1793101952.52,
+          "psi_before_injection_max": 0.0022,
+          "psi_max_after_injection": 0.35,
+          "alerts": {
+            "ScorePSIModerate": {
+              "seconds_to_psi_gauge_above_threshold": 28.7,
+              "seconds_to_alert_pending": 28.1,
+              "seconds_to_alert_firing_observed": 109.1,
+              "seconds_to_webhook_received": 113.1,
+              "seconds_to_issue_written": 113.1,
+              "issue_files": [
+                "ScorePSIModerate.md"
+              ],
+              "events": [
+                "created"
+              ]
+            },
+            "ScorePSISignificant": {
+              "seconds_to_psi_gauge_above_threshold": 48.7,
+              "seconds_to_alert_pending": 48.1,
+              "seconds_to_alert_firing_observed": 58.4,
+              "seconds_to_webhook_received": 63.1,
+              "seconds_to_issue_written": 63.1,
+              "issue_files": [
+                "ScorePSISignificant.md"
+              ],
+              "events": [
+                "created"
+              ]
+            }
+          },
+          "alerts_active_before_injection": []
+        },
+        {
+          "drift": {
+            "field": "p_emaildomain",
+            "value": "protonmail.com",
+            "fraction": 1.0
+          },
+          "t_inject_unix": 1793102167.234,
+          "psi_before_injection_max": 0.0021,
+          "psi_max_after_injection": 0.3488,
+          "alerts": {
+            "ScorePSIModerate": {
+              "seconds_to_psi_gauge_above_threshold": 28.8,
+              "seconds_to_alert_pending": 28.4,
+              "seconds_to_alert_firing_observed": 109.2,
+              "seconds_to_webhook_received": 113.4,
+              "seconds_to_issue_written": 113.4,
+              "issue_files": [
+                "ScorePSIModerate.md"
+              ],
+              "events": [
+                "created"
+              ]
+            },
+            "ScorePSISignificant": {
+              "seconds_to_psi_gauge_above_threshold": 48.8,
+              "seconds_to_alert_pending": 48.4,
+              "seconds_to_alert_firing_observed": 58.5,
+              "seconds_to_webhook_received": 63.4,
+              "seconds_to_issue_written": 63.4,
+              "issue_files": [
+                "ScorePSISignificant.md"
+              ],
+              "events": [
+                "created"
+              ]
+            }
+          },
+          "alerts_active_before_injection": []
+        }
+      ],
+      "summary": {
+        "ScorePSIModerate": {
+          "runs_detected": 3,
+          "seconds_to_psi_gauge_above_threshold": {
+            "median": 28.7,
+            "min": 27.7,
+            "max": 28.8
+          },
+          "seconds_to_alert_pending": {
+            "median": 28.1,
+            "min": 27.1,
+            "max": 28.4
+          },
+          "seconds_to_alert_firing_observed": {
+            "median": 109.1,
+            "min": 107.1,
+            "max": 109.2
+          },
+          "seconds_to_webhook_received": {
+            "median": 113.1,
+            "min": 112.1,
+            "max": 113.4
+          },
+          "seconds_to_issue_written": {
+            "median": 113.1,
+            "min": 112.1,
+            "max": 113.4
+          }
+        },
+        "ScorePSISignificant": {
+          "runs_detected": 3,
+          "seconds_to_psi_gauge_above_threshold": {
+            "median": 48.7,
+            "min": 42.7,
+            "max": 48.8
+          },
+          "seconds_to_alert_pending": {
+            "median": 48.1,
+            "min": 42.1,
+            "max": 48.4
+          },
+          "seconds_to_alert_firing_observed": {
+            "median": 58.4,
+            "min": 52.4,
+            "max": 58.5
+          },
+          "seconds_to_webhook_received": {
+            "median": 63.1,
+            "min": 57.1,
+            "max": 63.4
+          },
+          "seconds_to_issue_written": {
+            "median": 63.1,
+            "min": 57.1,
+            "max": 63.4
+          }
+        }
+      },
+      "example_issue_bodies": {
+        "ScorePSIModerate": "# [alert] ScorePSIModerate: score distribution drifted (PSI above 0.1)\n\nlabels: monitoring, alert:ScorePSIModerate\n\n---\n\n<!-- fraudrt-alert:ScorePSIModerate -->\n**Alert `ScorePSIModerate`** (warning) fired at `2026-10-27T11:50:45.63Z`; this issue was opened at `2026-10-27T11:50:50.644Z`.\n\nscore distribution drifted (PSI above 0.1)\n\nPSI of the last 5000 scores against the training reference is in the moderate band 0.1 to 0.25.\n\n### Values\n\n* value that triggered the rule: **0.146**\n* rule window: rolling window of 5000 transactions, for 30s\n* time window of interest: `2026-10-27T11:50:45.63Z` to `2026-10-27T11:50:50.644Z`\n\n### Readings when the alert arrived\n\n| metric | value |\n|---|---|\n| score PSI (rolling window) | 0.1195 |\n| alert rate (share of scored transactions) | 0.04294 |\n| p99 /score latency (s) | 0.004221 |\n| 5xx ratio | n/a |\n| consumer lag, transactions topic | 25 |\n| requests per second | 100 |\n\n### Features with the highest PSI now (rolling window vs training reference)\n\n| feature | PSI |\n|---|---|\n| `P_emaildomain` | 16.081 |\n| `email_match` | 1.565 |\n| `uid_secs_since_last` | 1.438 |\n| `id_31` | 0.882 |\n| `D11` | 0.609 |\n\nSeveral features sit above 0.25 even in normal operation (see `docs/MODEL_CARD.md`), so the level alone is not the signal; see the largest increase below. `hour` and `dow` are left out: a window shorter than a week never matches their reference.\n\n### Largest PSI increase since `2026-10-27T11:45:45Z`\n\n| feature | before | now |\n|---|---|---|\n| `P_emaildomain` | 4.467 | 16.081 |\n| `uid_secs_since_last` | 0.035 | 1.438 |\n| `email_match` | 0.193 | 1.565 |\n| `uid_cnt_24h` | 0.001 | 0.192 |\n| `uid_sum_24h` | 0.001 | 0.191 |\n\n[Dashboard](http://localhost:3000/d/fraud-monitoring/fraud-monitoring?from=1793100945630&to=1793102150644)\n[Rule expression in Prometheus](http://4f95eb8a4fe6:9090/graph?g0.expr=fraud_score_psi+%3E+0.1+and+fraud_score_psi+%3C%3D+0.25&g0.tab=1)\n",
+        "ScorePSISignificant": "# [alert] ScorePSISignificant: score distribution drifted (PSI above 0.25)\n\nlabels: monitoring, alert:ScorePSISignificant\n\n---\n\n<!-- fraudrt-alert:ScorePSISignificant -->\n**Alert `ScorePSISignificant`** (critical) fired at `2026-10-27T11:49:50.63Z`; this issue was opened at `2026-10-27T11:49:55.660Z`.\n\nscore distribution drifted (PSI above 0.25)\n\nPSI of the last 5000 scores against the training reference is above 0.25: a significant shift, consider retraining.\n\n### Values\n\n* value that triggered the rule: **0.349**\n* rule window: rolling window of 5000 transactions, for 10s\n* time window of interest: `2026-10-27T11:49:50.63Z` to `2026-10-27T11:49:55.660Z`\n\n### Readings when the alert arrived\n\n| metric | value |\n|---|---|\n| score PSI (rolling window) | 0.3345 |\n| alert rate (share of scored transactions) | 0.03531 |\n| p99 /score latency (s) | 0.003911 |\n| 5xx ratio | n/a |\n| consumer lag, transactions topic | 28 |\n| requests per second | 100.4 |\n\n### Features with the highest PSI now (rolling window vs training reference)\n\n| feature | PSI |\n|---|---|\n| `P_emaildomain` | 16.081 |\n| `uid_secs_since_last` | 1.951 |\n| `email_match` | 1.563 |\n| `id_31` | 0.796 |\n| `D11` | 0.606 |\n\nSeveral features sit above 0.25 even in normal operation (see `docs/MODEL_CARD.md`), so the level alone is not the signal; see the largest increase below. `hour` and `dow` are left out: a window shorter than a week never matches their reference.\n\n### Largest PSI increase since `2026-10-27T11:44:50Z`\n\n| feature | before | now |\n|---|---|---|\n| `P_emaildomain` | 4.470 | 16.081 |\n| `uid_secs_since_last` | 0.078 | 1.951 |\n| `email_match` | 0.187 | 1.563 |\n| `uid_sum_24h` | 0.019 | 0.076 |\n| `uid_cnt_24h` | 0.021 | 0.074 |\n\n[Dashboard](http://localhost:3000/d/fraud-monitoring/fraud-monitoring?from=1793100890630&to=1793102095660)\n[Rule expression in Prometheus](http://4f95eb8a4fe6:9090/graph?g0.expr=fraud_score_psi+%3E+0.25&g0.tab=1)\n"
+      }
     }
   }
 }

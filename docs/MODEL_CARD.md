@@ -180,10 +180,23 @@ Implemented in `src/fraudrt/monitoring/` ([`monitoring.json`](results/monitoring
 * **What would alert first:** the label-free PSI, because labels are a week late and noisy. In the
   measured run the score PSI stayed flat while several feature PSIs were high from the start, so a
   fixed feature-PSI threshold is too noisy on its own (it would fire from day one): the score PSI and
-  the *change* in feature PSI are the more useful signals. No alert thresholds or paging are
-  implemented; this is a report, not an alerting system.
-* **Not implemented:** segment-level monitoring over time, calibration monitoring, alert-rate and
-  analyst-override-rate tracking. These are the ones to add first in a real deployment, together with
+  the *change* in feature PSI are the more useful signals.
+* **Live monitoring and alerting (opt-in, `make monitoring-up`; README section "Live monitoring and
+  alerting"):** Prometheus metrics from the API and the stream worker, a Grafana dashboard, and
+  Alertmanager rules for p99 latency, 5xx rate, consumer lag and the rolling score PSI (> 0.1 and
+  > 0.25, window of the last 5,000 scores; 2,000 gave a false alarm on normal hold-out traffic, see
+  [`psi_window.json`](results/psi_window.json)). A firing alert opens one GitHub issue per alert name
+  through a webhook receiver (dry-run by default; no real issue has been filed).
+  Measured on a replay at 100 transactions/s with injected drift
+  ([`alerting.json`](results/alerting.json)): a 100% switch of the email domain was alerted at
+  PSI 0.35 with an issue 57 to 63 s after injection; an amount shift of x3 or x5 (PSI 0.14 to 0.17)
+  raised the 0.1 alert with an issue 77 to 83 s after injection; **x2 amount and a 50% domain shift
+  (PSI 0.08 to 0.09) were not detected**. These are synthetic shifts, so they bound the pipeline's
+  latency and sensitivity, not the model's behaviour under real drift.
+* **Still not implemented:** segment-level monitoring over time, calibration monitoring and
+  analyst-override-rate tracking (the alert *volume* is exported and charted, with no alert rule on
+  it), a paging channel other than the GitHub issue, and any action on an alert: nothing retrains or
+  rolls back automatically. These are the ones to add first in a real deployment, together with
   re-running the segment table above on every retrain.
 
 ## 7. Retraining
@@ -208,7 +221,7 @@ semi-supervised methods tried did not help beyond noise.
 | risk | what could happen | mitigation here | what is missing |
 |---|---|---|---|
 | **False positives block or burden legitimate customers** | At 3% alerts, 47.6% of alerts are legitimate (precision 52.4%); 1.48% of legitimate transactions are alerted, up to 6.8% in `ProductCD = C` and 7.1% for Discover | Intended use is review, not automatic blocking; alert volume capped by analyst capacity; segment error table above | Customer-friction metrics, appeal / feedback path, per-segment alert-rate limits |
-| **Drift** | Fraud patterns, products or devices change; the model degrades silently | PSI on score and features; delayed-label PR-AUC; retraining with only known labels | Alert thresholds, calibration monitoring, an agreed retrain trigger |
+| **Drift** | Fraud patterns, products or devices change; the model degrades silently | PSI on score and features; live PSI alerts (> 0.1, > 0.25) with automatic issue filing; delayed-label PR-AUC; retraining with only known labels | Small shifts (score PSI < 0.1) go undetected; calibration monitoring; an agreed retrain trigger |
 | **Feedback loops from analyst-reviewed labels** | Only alerted cases are investigated, so confirmed-fraud labels over-represent what the model already flags; unreviewed frauds look like negatives | In this study labels are the dataset's ground truth for **all** transactions, so the loop **is not simulated** and its effect is not measured | In production: label a random sample of non-alerted transactions, and track chargeback labels separately from analyst decisions |
 | **Adversarial adaptation** | Fraudsters learn what passes (small amounts, new devices, fresh identities) and shift behaviour | Windowed identity features, retraining; low-support behaviours are visible in the segment table | No adversarial testing was done; no rate-limiting or rules layer |
 | **Proxy for protected attributes** | Features such as `addr1` or the email domain may correlate with protected characteristics | None; not testable with this data | A fairness audit on real data with demographic information, under legal review |

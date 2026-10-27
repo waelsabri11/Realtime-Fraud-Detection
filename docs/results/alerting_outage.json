@@ -1,0 +1,36 @@
+{
+  "scenario": "API container stopped 60 s into a 100 tx/s replay; restarted after 260 s",
+  "seconds_after_stop_first_seen": {
+    "ConsumerLagGrowing": {
+      "pending": 0.7,
+      "firing": 134.8
+    },
+    "ScrapeTargetDown": {
+      "pending": 4.8,
+      "firing": 65.2
+    }
+  },
+  "consumer_lag_at_restart": 25668.0,
+  "issue_events": [
+    {
+      "alert": "ScrapeTargetDown",
+      "action": "created",
+      "seconds_after_stop": 69.8
+    },
+    {
+      "alert": "ConsumerLagGrowing",
+      "action": "created",
+      "seconds_after_stop": 139.8
+    },
+    {
+      "alert": "ScrapeTargetDown",
+      "action": "commented_resolved",
+      "seconds_after_stop": 309.8
+    },
+    {
+      "alert": "ConsumerLagGrowing",
+      "action": "commented_resolved",
+      "seconds_after_stop": 319.8
+    }
+  ]
+}
