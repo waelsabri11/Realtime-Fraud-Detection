@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 import time
 from typing import Any
 
@@ -14,7 +15,7 @@ from prometheus_client import start_http_server
 from fraudrt.config import Settings
 from fraudrt.db.repo import Repository, make_engine
 from fraudrt.observability import WorkerMetrics
-from fraudrt.streaming.kafka_util import ensure_topics
+from fraudrt.streaming.kafka_util import ensure_topics, lag_by_partition
 
 log = logging.getLogger(__name__)
 
@@ -69,18 +70,22 @@ class LabelGate:
         return max(self.clock.values(), default=0) / 86_400
 
 
-def refresh_lag(
-    consumer: Consumer, metrics: WorkerMetrics, next_offsets: dict[tuple[str, int], int]
-) -> None:
-    """Lag per assigned partition: high watermark minus the next offset this worker will commit."""
-    for tp in consumer.assignment():
-        key = (tp.topic, tp.partition)
-        lo, hi = consumer.get_watermark_offsets(tp, timeout=5)
-        off = next_offsets.get(key)
-        if off is None:
-            committed = consumer.committed([TopicPartition(*key)], timeout=5)[0].offset
-            off = committed if committed >= 0 else lo
-        metrics.lag.labels(tp.topic, str(tp.partition)).set(max(hi - off, 0))
+def start_lag_reporter(settings: Settings, metrics: WorkerMetrics) -> threading.Event:
+    """Report committed-offset lag from a thread of its own, so the gauge keeps moving while the
+    main loop is blocked retrying /score (exactly when lag matters). Returns the stop event."""
+    stop = threading.Event()
+
+    def loop() -> None:
+        while not stop.is_set():
+            try:
+                for (topic, part), lag in lag_by_partition(settings).items():
+                    metrics.lag.labels(topic, str(part)).set(max(lag, 0))
+            except Exception as exc:  # lag is observability; never stop the stream for it
+                log.warning("lag refresh failed: %s", exc)
+            stop.wait(settings.lag_interval_seconds)
+
+    threading.Thread(target=loop, name="lag-reporter", daemon=True).start()
+    return stop
 
 
 def run_worker(settings: Settings, stop_after_idle_seconds: float | None = None) -> None:
@@ -104,20 +109,13 @@ def run_worker(settings: Settings, stop_after_idle_seconds: float | None = None)
     metrics = WorkerMetrics()
     if settings.worker_metrics_port:
         start_http_server(settings.worker_metrics_port, registry=metrics.registry)
-    next_offsets: dict[tuple[str, int], int] = {}
-    next_lag = 0.0
+    stop_lag = start_lag_reporter(settings, metrics)
     scored = labelled = 0
     t0 = time.perf_counter()
     last_msg = time.perf_counter()
     log.info("worker started: %s -> %s", settings.kafka_bootstrap, settings.api_url)
     try:
         while True:
-            if time.monotonic() >= next_lag:
-                try:
-                    refresh_lag(consumer, metrics, next_offsets)
-                except Exception as exc:  # lag is observability; never stop the stream for it
-                    log.warning("lag refresh failed: %s", exc)
-                next_lag = time.monotonic() + settings.lag_interval_seconds
             for t, p, off in gate.resumable():
                 tp = TopicPartition(t, p, off)
                 consumer.seek(tp)
@@ -173,7 +171,6 @@ def run_worker(settings: Settings, stop_after_idle_seconds: float | None = None)
                 metrics.labels_stored.inc(len(labels))
             metrics.clock_day.set(gate.max_day())
             if commits:
-                next_offsets.update(commits)
                 consumer.commit(
                     offsets=[TopicPartition(t, p, o) for (t, p), o in commits.items()],
                     asynchronous=False,
@@ -187,5 +184,6 @@ def run_worker(settings: Settings, stop_after_idle_seconds: float | None = None)
                     scored / (time.perf_counter() - t0),
                 )
     finally:
+        stop_lag.set()
         consumer.close()
         client.close()

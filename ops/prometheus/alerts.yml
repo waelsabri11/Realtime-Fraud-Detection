@@ -36,7 +36,7 @@ groups:
         labels: {severity: warning}
         annotations:
           summary: "stream worker is falling behind the transactions topic"
-          description: "More than 1000 unprocessed messages and the backlog has been growing for 2 minutes. A replay at speedup 0 triggers this by design."
+          description: "More than 1000 unprocessed messages and the backlog has been growing for 2 minutes. The labels topic is not alerted on: it holds future-dated labels on purpose."
           value: '{{ $value | printf "%.0f" }} messages behind'
           window: "slope over 2m, for 2m"
 

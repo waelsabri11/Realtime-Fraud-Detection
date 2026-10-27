@@ -265,7 +265,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(fraud_api_requests_total{status=~\"5..\"}[2m])) / sum(rate(fraud_api_requests_total[2m]))",
+          "expr": "(sum(rate(fraud_api_requests_total{status=~\"5..\"}[2m])) or vector(0)) / sum(rate(fraud_api_requests_total[2m]))",
           "legendFormat": "",
           "refId": "A"
         }
@@ -502,8 +502,8 @@
     {
       "id": 9,
       "type": "timeseries",
-      "title": "Alert volume (per minute) and rate",
-      "description": "",
+      "title": "Alert volume (alerts per minute)",
+      "description": "Scored transactions at or above the alert threshold (0.18, about 3% of replay scores).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -523,15 +523,6 @@
           "expr": "sum(rate(fraud_alerts_total[1m])) * 60",
           "legendFormat": "alerts / min",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum(rate(fraud_scored_transactions_total[1m])) * 60",
-          "legendFormat": "scored / min",
-          "refId": "B"
         }
       ],
       "fieldConfig": {
