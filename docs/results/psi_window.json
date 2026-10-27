@@ -1,0 +1,39 @@
+{
+  "n_scores": 105693,
+  "model": "fraud-lgbm v1",
+  "threshold_for_3pct_alert_rate": 0.1758,
+  "alert_rate_at_configured_threshold": {
+    "threshold": 0.18,
+    "rate": 0.0295
+  },
+  "windows": {
+    "1000": {
+      "positions": 1047,
+      "max": 0.3036,
+      "p99": 0.2036,
+      "median": 0.0171,
+      "share_above_0.1": 0.0267
+    },
+    "2000": {
+      "positions": 519,
+      "max": 0.1607,
+      "p99": 0.1084,
+      "median": 0.0101,
+      "share_above_0.1": 0.0154
+    },
+    "5000": {
+      "positions": 202,
+      "max": 0.0669,
+      "p99": 0.0662,
+      "median": 0.0061,
+      "share_above_0.1": 0.0
+    },
+    "10000": {
+      "positions": 96,
+      "max": 0.0279,
+      "p99": 0.0243,
+      "median": 0.0037,
+      "share_above_0.1": 0.0
+    }
+  }
+}

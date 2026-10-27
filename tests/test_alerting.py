@@ -52,12 +52,19 @@ def _prom(handler: Any) -> PrometheusClient:
     return PrometheusClient("http://prom", client)
 
 
-def fake_prometheus() -> PrometheusClient:
+def fake_prometheus(no_history: bool = False) -> PrometheusClient:
     def handler(req: httpx.Request) -> httpx.Response:
         q = req.url.params["query"]
         earlier = "time" in req.url.params
-        if q == "fraud_feature_psi":
-            rows = [("TransactionAmt", 0.05 if earlier else 0.9), ("id_31", 0.63), ("D1", 0.02)]
+        if q in ("fraud_feature_psi", "min_over_time(fraud_feature_psi[1h])"):
+            rows = [
+                ("TransactionAmt", 0.05 if earlier or "min" in q else 0.9),
+                ("id_31", 0.63),
+                ("D1", 0.02),
+                ("dow", 4.9),
+            ]
+            if earlier and no_history:
+                rows = []
             result = [{"metric": {"feature": f}, "value": [0, str(v)]} for f, v in rows]
         else:
             result = [{"metric": {}, "value": [0, "0.142"]}]
@@ -206,3 +213,10 @@ def test_dashboard_json_is_provisionable() -> None:
     assert d["uid"] == "fraud-monitoring" and len(d["panels"]) >= 12
     ids = [p["id"] for p in d["panels"]]
     assert len(ids) == len(set(ids))
+
+
+def test_calendar_features_are_excluded_and_baseline_falls_back_to_hourly_minimum() -> None:
+    ctx = gather_context(fake_prometheus(no_history=True), 1_790_000_000.0)
+    assert "dow" not in [f for f, _ in ctx.top_features_now]
+    assert ctx.baseline == "the lowest value in the last hour"
+    assert [f for f, _, _ in ctx.top_feature_increase] == ["TransactionAmt"]

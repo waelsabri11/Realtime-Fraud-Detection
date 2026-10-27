@@ -57,7 +57,7 @@ class Context:
     readings: dict[str, float | None] = field(default_factory=dict)
     top_features_now: list[tuple[str, float]] = field(default_factory=list)
     top_feature_increase: list[tuple[str, float, float]] = field(default_factory=list)
-    baseline_time: str = ""
+    baseline: str = ""
 
 
 @dataclass
@@ -101,13 +101,15 @@ def render_issue(alert: Alert, ctx: Context, dashboard_url: str, now: str) -> Is
             "|---|---|",
             *[f"| `{f}` | {v:.3f} |" for f, v in ctx.top_features_now],
             "",
-            "Some features sit above 0.25 even in normal operation (see `docs/MODEL_CARD.md`), "
-            "so compare with the table below.",
+            "Several features sit above 0.25 even in normal operation (see `docs/MODEL_CARD.md`), "
+            "so the level alone is not the signal; see the largest increase below. "
+            "`hour` and `dow` are left out: a window shorter than a week never matches their "
+            "reference.",
         ]
     if ctx.top_feature_increase:
         lines += [
             "",
-            f"### Largest PSI increase since `{ctx.baseline_time}`",
+            f"### Largest PSI increase since {ctx.baseline}",
             "",
             "| feature | before | now |",
             "|---|---|---|",
@@ -235,7 +237,16 @@ READINGS = {
 }
 
 
-def gather_context(prom: PrometheusClient, starts_at_unix: float | None) -> Context:
+CALENDAR_FEATURES = frozenset({"hour", "dow"})  # structurally high in a window shorter than a week
+
+
+def _psi_by_feature(rows: list[tuple[dict[str, str], float]]) -> dict[str, float]:
+    return {m["feature"]: v for m, v in rows if m.get("feature") not in CALENDAR_FEATURES}
+
+
+def gather_context(
+    prom: PrometheusClient, starts_at_unix: float | None, lookback_seconds: float = 300
+) -> Context:
     ctx = Context()
     for name, expr in READINGS.items():
         try:
@@ -244,18 +255,22 @@ def gather_context(prom: PrometheusClient, starts_at_unix: float | None) -> Cont
         except httpx.HTTPError:
             ctx.readings[name] = None
     try:
-        now = {m["feature"]: v for m, v in prom.query("fraud_feature_psi")}
+        now = _psi_by_feature(prom.query("fraud_feature_psi"))
         ctx.top_features_now = sorted(now.items(), key=lambda kv: -kv[1])[:5]
+        before: dict[str, float] = {}
         if starts_at_unix is not None:
-            before_t = starts_at_unix - 120
-            before = {m["feature"]: v for m, v in prom.query("fraud_feature_psi", at=before_t)}
-            rises = sorted(
-                ((f, before[f], v) for f, v in now.items() if f in before),
-                key=lambda t: t[2] - t[1],
-                reverse=True,
-            )
-            ctx.top_feature_increase = [r for r in rises[:5] if r[2] - r[1] > 0.01]
-            ctx.baseline_time = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(before_t))
+            t = starts_at_unix - lookback_seconds
+            before = _psi_by_feature(prom.query("fraud_feature_psi", at=t))
+            ctx.baseline = "`" + time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t)) + "`"
+        if not before:  # the metric did not exist yet (or no alert time): lowest value of the hour
+            before = _psi_by_feature(prom.query("min_over_time(fraud_feature_psi[1h])"))
+            ctx.baseline = "the lowest value in the last hour"
+        rises = sorted(
+            ((f, before[f], v) for f, v in now.items() if f in before),
+            key=lambda t3: t3[2] - t3[1],
+            reverse=True,
+        )
+        ctx.top_feature_increase = [r for r in rises[:5] if r[2] - r[1] > 0.01]
     except httpx.HTTPError:
         pass
     return ctx

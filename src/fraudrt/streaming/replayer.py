@@ -29,17 +29,25 @@ log = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class DriftSpec:
-    """Synthetic covariate shift for the alerting experiment: from the `after`-th transaction on,
-    multiply one numeric request field by `scale`. The model and its reference are untouched."""
+    """Synthetic covariate shift for the alerting experiment. From the `after`-th transaction on,
+    a deterministic `fraction` of transactions get `field` multiplied by `scale`, or set to
+    `value` when given. The model and its reference are untouched."""
 
     after: int
     field: str = "transaction_amt"
     scale: float = 1.0
+    value: str | float | None = None
+    fraction: float = 1.0
+
+    def selects(self, n_tx: int) -> bool:
+        return self.fraction >= 1.0 or (n_tx * 0.6180339887) % 1.0 < self.fraction
 
 
 def apply_drift(value: bytes, spec: DriftSpec) -> bytes:
     payload = json.loads(value)
-    if payload.get(spec.field) is not None:
+    if spec.value is not None:
+        payload[spec.field] = spec.value
+    elif isinstance(payload.get(spec.field), int | float):
         payload[spec.field] = payload[spec.field] * spec.scale
     return json.dumps(payload).encode()
 
@@ -104,8 +112,14 @@ def replay(
         if drift is not None and topic == settings.topic_transactions and n_tx >= drift.after:
             if drift_started is None:
                 drift_started = time.time()
-                log.info("drift injected from transaction %d: %s", n_tx, drift)
-            value = apply_drift(value, drift)
+                log.info(
+                    "drift injected from transaction %d at unix=%.3f: %s",
+                    n_tx,
+                    drift_started,
+                    drift,
+                )
+            if drift.selects(n_tx):
+                value = apply_drift(value, drift)
         while True:
             try:
                 producer.produce(topic, value=value, key=key)
@@ -135,6 +149,8 @@ def replay(
         summary["drift"] = {
             "field": drift.field,
             "scale": drift.scale,
+            "value": drift.value,
+            "fraction": drift.fraction,
             "after_transaction": drift.after,
             "injected_at_unix": drift_started,
         }

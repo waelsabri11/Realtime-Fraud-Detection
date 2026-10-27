@@ -142,3 +142,15 @@ def test_rules_and_dashboard_only_use_metrics_that_exist(served: TestClient) -> 
     used |= _metric_names((ROOT / "src/fraudrt/alerting/issues.py").read_text())
     assert used, "no metric names found"
     assert used <= exported, f"unknown metrics: {sorted(used - exported)}"
+
+
+def test_apply_drift_sets_a_value_for_a_fraction_of_transactions() -> None:
+    spec = DriftSpec(0, "p_emaildomain", value="protonmail.com", fraction=0.3)
+    chosen = [spec.selects(i) for i in range(1000)]
+    assert 280 <= sum(chosen) <= 320
+    out = json.loads(apply_drift(b'{"p_emaildomain": "gmail.com", "card1": 5}', spec))
+    assert out == {"p_emaildomain": "protonmail.com", "card1": 5}
+    # a string field is never "scaled"
+    assert json.loads(apply_drift(b'{"product_cd": "W"}', DriftSpec(0, "product_cd", scale=5))) == {
+        "product_cd": "W"
+    }

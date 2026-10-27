@@ -46,19 +46,19 @@ groups:
         labels: {severity: warning}
         annotations:
           summary: "score distribution drifted (PSI above 0.1)"
-          description: "PSI of the last 2000 scores against the training reference is in the moderate band 0.1 to 0.25."
+          description: "PSI of the last 5000 scores against the training reference is in the moderate band 0.1 to 0.25."
           value: '{{ $value | printf "%.3f" }}'
-          window: "rolling window of 2000 transactions, for 30s"
+          window: "rolling window of 5000 transactions, for 30s"
 
       - alert: ScorePSISignificant
         expr: fraud_score_psi > 0.25
-        for: 30s
+        for: 10s
         labels: {severity: critical}
         annotations:
           summary: "score distribution drifted (PSI above 0.25)"
-          description: "PSI of the last 2000 scores against the training reference is above 0.25: a significant shift, consider retraining."
+          description: "PSI of the last 5000 scores against the training reference is above 0.25: a significant shift, consider retraining."
           value: '{{ $value | printf "%.3f" }}'
-          window: "rolling window of 2000 transactions, for 30s"
+          window: "rolling window of 5000 transactions, for 10s"
 
       - alert: ScrapeTargetDown
         expr: up == 0

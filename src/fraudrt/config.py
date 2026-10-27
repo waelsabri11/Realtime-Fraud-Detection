@@ -48,9 +48,9 @@ class Settings(BaseSettings):
     high_amount_cost: int = 2
 
     # --- monitoring ---
-    alert_score_threshold: float = 0.3  # score at/above which a transaction counts as an alert
-    drift_window: int = 2000  # rolling window (scored transactions) for the live PSI
-    drift_min_samples: int = 500
+    alert_score_threshold: float = 0.18  # ~3% of replay scores (docs/results/psi_window.json)
+    drift_window: int = 5000  # rolling window for the live PSI; 2000 false-alarms on normal traffic
+    drift_min_samples: int = 5000  # a partial window is too noisy: wait until it is full
     drift_interval_seconds: float = 5.0
     worker_metrics_port: int = 9101  # 0 disables the worker's /metrics endpoint
     lag_interval_seconds: float = 5.0

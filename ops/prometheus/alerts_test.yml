@@ -20,18 +20,18 @@ tests:
           - exp_labels: {severity: warning}
             exp_annotations:
               summary: "score distribution drifted (PSI above 0.1)"
-              description: "PSI of the last 2000 scores against the training reference is in the moderate band 0.1 to 0.25."
+              description: "PSI of the last 5000 scores against the training reference is in the moderate band 0.1 to 0.25."
               value: "0.150"
-              window: "rolling window of 2000 transactions, for 30s"
-      - eval_time: 130s
+              window: "rolling window of 5000 transactions, for 30s"
+      - eval_time: 110s
         alertname: ScorePSISignificant
         exp_alerts:
           - exp_labels: {severity: critical}
             exp_annotations:
               summary: "score distribution drifted (PSI above 0.25)"
-              description: "PSI of the last 2000 scores against the training reference is above 0.25: a significant shift, consider retraining."
+              description: "PSI of the last 5000 scores against the training reference is above 0.25: a significant shift, consider retraining."
               value: "0.400"
-              window: "rolling window of 2000 transactions, for 30s"
+              window: "rolling window of 5000 transactions, for 10s"
 
   - name: growing lag fires, a draining backlog does not
     interval: 5s
@@ -101,3 +101,19 @@ tests:
               description: "The 99th percentile of server-side /score latency has been above 25 ms for 1 minute (README p99 under replay load: about 1 ms)."
               value: "99.25ms"
               window: "p99 over 1m, for 1m"
+
+  - name: a spike above 0.25 that lasts only 20 s is still critical
+    interval: 5s
+    input_series:
+      - series: 'fraud_score_psi'
+        values: '0.01+0x5 0.34+0x4 0.15+0x20'
+    alert_rule_test:
+      - eval_time: 40s
+        alertname: ScorePSISignificant
+        exp_alerts:
+          - exp_labels: {severity: critical}
+            exp_annotations:
+              summary: "score distribution drifted (PSI above 0.25)"
+              description: "PSI of the last 5000 scores against the training reference is above 0.25: a significant shift, consider retraining."
+              value: "0.340"
+              window: "rolling window of 5000 transactions, for 10s"

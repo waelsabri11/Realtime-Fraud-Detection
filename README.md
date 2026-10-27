@@ -40,6 +40,12 @@ flowchart LR
     PG --> MON["drift (PSI) +<br/>label-aware performance"]
     PG -->|"only labels known by the retrain date"| RETRAIN["retrain, register challenger"]
     RETRAIN --> MLF
+    API -. "/metrics" .-> PROM["Prometheus<br/>(profile: monitoring)"]
+    W -. "/metrics, consumer lag" .-> PROM
+    PROM --> GRAF["Grafana dashboard"]
+    PROM -->|alert rules| AM["Alertmanager"]
+    AM -->|webhook| RCV["issue receiver<br/>dedup, dry-run"]
+    RCV -->|"one open issue per alert"| GH[("GitHub issue")]
 ```
 
 ### Design decisions that matter

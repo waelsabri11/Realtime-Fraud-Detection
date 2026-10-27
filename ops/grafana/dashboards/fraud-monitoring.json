@@ -16,7 +16,7 @@
     {
       "id": 1,
       "type": "stat",
-      "title": "Score PSI (rolling 2000)",
+      "title": "Score PSI (rolling 5000)",
       "description": "PSI of the latest scores vs the training reference. Alerts at 0.1 and 0.25.",
       "datasource": {
         "type": "prometheus",

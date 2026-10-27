@@ -65,6 +65,8 @@ def replay(
     ] = None,
     drift_field: Annotated[str, typer.Option()] = "transaction_amt",
     drift_scale: Annotated[float, typer.Option(help="multiply the drift field by this")] = 1.0,
+    drift_value: Annotated[str | None, typer.Option(help="set the drift field to this")] = None,
+    drift_fraction: Annotated[float, typer.Option(help="share of transactions drifted")] = 1.0,
     out: Annotated[Path | None, typer.Option(help="write the summary here")] = None,
 ) -> None:
     """Publish the hold-out period (transactions + delayed labels) to Redpanda."""
@@ -76,7 +78,11 @@ def replay(
 
     s = get_settings()
     t0 = time.perf_counter()
-    spec = DriftSpec(drift_after, drift_field, drift_scale) if drift_after is not None else None
+    spec = (
+        DriftSpec(drift_after, drift_field, drift_scale, drift_value, drift_fraction)
+        if drift_after is not None
+        else None
+    )
     summary = do_replay(s, speedup=speedup, limit=limit, rate=rate, drift=spec)
     typer.echo(summary)
     if wait:

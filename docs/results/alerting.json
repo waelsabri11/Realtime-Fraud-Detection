@@ -1,0 +1,633 @@
+{
+  "config": {
+    "rate_tx_per_s": 100.0,
+    "drift_after_transactions": 7000,
+    "timeout_s_after_injection": 180.0,
+    "psi_window": 5000,
+    "scrape_interval_s": 5,
+    "rule_evaluation_interval_s": 5,
+    "rule_for_s": 30,
+    "alertmanager_group_wait_s": 5,
+    "drift_refresh_interval_s": 5,
+    "machine": "arm64 Darwin 24.3.0"
+  },
+  "scenarios": {
+    "amount_x2": {
+      "drift": {
+        "field": "transaction_amt",
+        "scale": 2.0
+      },
+      "runs": [
+        {
+          "t_inject_unix": 1793096942.07,
+          "psi_before_injection_max": 0.0023,
+          "psi_max_after_injection": 0.081,
+          "alerts": {
+            "ScorePSIModerate": {
+              "seconds_to_psi_gauge_above_threshold": null,
+              "seconds_to_alert_pending": null,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            },
+            "ScorePSISignificant": {
+              "seconds_to_psi_gauge_above_threshold": null,
+              "seconds_to_alert_pending": null,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            }
+          },
+          "alerts_active_before_injection": [],
+          "drift": {
+            "field": "transaction_amt",
+            "scale": 2.0
+          }
+        }
+      ],
+      "summary": {
+        "ScorePSIModerate": {
+          "runs_detected": 0
+        },
+        "ScorePSISignificant": {
+          "runs_detected": 0
+        }
+      },
+      "example_issue_bodies": {}
+    },
+    "amount_x3": {
+      "drift": {
+        "field": "transaction_amt",
+        "scale": 3.0
+      },
+      "runs": [
+        {
+          "t_inject_unix": 1793097222.934,
+          "psi_before_injection_max": 0.0027,
+          "psi_max_after_injection": 0.1399,
+          "alerts": {
+            "ScorePSIModerate": {
+              "seconds_to_psi_gauge_above_threshold": 47.7,
+              "seconds_to_alert_pending": 47.7,
+              "seconds_to_alert_firing_observed": 78.7,
+              "seconds_to_webhook_received": 82.7,
+              "seconds_to_issue_written": 82.7,
+              "issue_files": [
+                "ScorePSIModerate.md"
+              ],
+              "events": [
+                "created",
+                "commented_resolved"
+              ]
+            },
+            "ScorePSISignificant": {
+              "seconds_to_psi_gauge_above_threshold": null,
+              "seconds_to_alert_pending": null,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            }
+          },
+          "alerts_active_before_injection": [],
+          "drift": {
+            "field": "transaction_amt",
+            "scale": 3.0
+          }
+        },
+        {
+          "t_inject_unix": 1793097503.613,
+          "psi_before_injection_max": 0.0024,
+          "psi_max_after_injection": 0.1399,
+          "alerts": {
+            "ScorePSIModerate": {
+              "seconds_to_psi_gauge_above_threshold": 47.7,
+              "seconds_to_alert_pending": 47.0,
+              "seconds_to_alert_firing_observed": 77.7,
+              "seconds_to_webhook_received": 82.0,
+              "seconds_to_issue_written": 82.0,
+              "issue_files": [
+                "ScorePSIModerate.md"
+              ],
+              "events": [
+                "created",
+                "commented_resolved"
+              ]
+            },
+            "ScorePSISignificant": {
+              "seconds_to_psi_gauge_above_threshold": null,
+              "seconds_to_alert_pending": null,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            }
+          },
+          "alerts_active_before_injection": [],
+          "drift": {
+            "field": "transaction_amt",
+            "scale": 3.0
+          }
+        },
+        {
+          "t_inject_unix": 1793097783.407,
+          "psi_before_injection_max": 0.003,
+          "psi_max_after_injection": 0.1386,
+          "alerts": {
+            "ScorePSIModerate": {
+              "seconds_to_psi_gauge_above_threshold": 42.7,
+              "seconds_to_alert_pending": 42.2,
+              "seconds_to_alert_firing_observed": 72.6,
+              "seconds_to_webhook_received": 77.2,
+              "seconds_to_issue_written": 77.3,
+              "issue_files": [
+                "ScorePSIModerate.md"
+              ],
+              "events": [
+                "created",
+                "commented_resolved"
+              ]
+            },
+            "ScorePSISignificant": {
+              "seconds_to_psi_gauge_above_threshold": null,
+              "seconds_to_alert_pending": null,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            }
+          },
+          "alerts_active_before_injection": [],
+          "drift": {
+            "field": "transaction_amt",
+            "scale": 3.0
+          }
+        }
+      ],
+      "summary": {
+        "ScorePSIModerate": {
+          "runs_detected": 3,
+          "seconds_to_psi_gauge_above_threshold": {
+            "median": 47.7,
+            "min": 42.7,
+            "max": 47.7
+          },
+          "seconds_to_alert_pending": {
+            "median": 47.0,
+            "min": 42.2,
+            "max": 47.7
+          },
+          "seconds_to_alert_firing_observed": {
+            "median": 77.7,
+            "min": 72.6,
+            "max": 78.7
+          },
+          "seconds_to_webhook_received": {
+            "median": 82.0,
+            "min": 77.2,
+            "max": 82.7
+          },
+          "seconds_to_issue_written": {
+            "median": 82.0,
+            "min": 77.3,
+            "max": 82.7
+          }
+        },
+        "ScorePSISignificant": {
+          "runs_detected": 0
+        }
+      },
+      "example_issue_bodies": {
+        "ScorePSIModerate": "# [alert] ScorePSIModerate: score distribution drifted (PSI above 0.1)\n\nlabels: monitoring, alert:ScorePSIModerate\n\n---\n\n<!-- fraudrt-alert:ScorePSIModerate -->\n**Alert `ScorePSIModerate`** (warning) fired at `2026-10-27T10:35:00.63Z`; this issue was opened at `2026-10-27T10:35:05.652Z`.\n\nscore distribution drifted (PSI above 0.1)\n\nPSI of the last 5000 scores against the training reference is in the moderate band 0.1 to 0.25.\n\n### Values\n\n* value that triggered the rule: **0.105**\n* rule window: rolling window of 5000 transactions, for 30s\n* time window of interest: `2026-10-27T10:35:00.63Z` to `2026-10-27T10:35:05.652Z`\n\n### Readings when the alert arrived\n\n| metric | value |\n|---|---|\n| score PSI (rolling window) | 0.1044 |\n| alert rate (share of scored transactions) | 0.03386 |\n| p99 /score latency (s) | 0.004019 |\n| 5xx ratio | n/a |\n| consumer lag, transactions topic | 19 |\n| requests per second | 100.3 |\n\n### Features with the highest PSI now (rolling window vs training reference)\n\n| feature | PSI |\n|---|---|\n| `dow` | 4.896 |\n| `TransactionAmt` | 1.608 |\n| `log_amt` | 1.608 |\n| `amt_cents` | 1.528 |\n| `id_31` | 0.933 |\n\nSome features sit above 0.25 even in normal operation (see `docs/MODEL_CARD.md`), so compare with the table below.\n\n[Dashboard](http://localhost:3000/d/fraud-monitoring/fraud-monitoring?from=1793096400630&to=1793097605652)\n[Rule expression in Prometheus](http://4f95eb8a4fe6:9090/graph?g0.expr=fraud_score_psi+%3E+0.1+and+fraud_score_psi+%3C%3D+0.25&g0.tab=1)\n\n---\n**Comment:** Alert resolved at 2026-10-27T10:35:15.63Z.\n"
+      }
+    },
+    "amount_x5": {
+      "drift": {
+        "field": "transaction_amt",
+        "scale": 5.0
+      },
+      "runs": [
+        {
+          "t_inject_unix": 1793098067.194,
+          "psi_before_injection_max": 0.0023,
+          "psi_max_after_injection": 0.1688,
+          "alerts": {
+            "ScorePSIModerate": {
+              "seconds_to_psi_gauge_above_threshold": 43.7,
+              "seconds_to_alert_pending": 43.4,
+              "seconds_to_alert_firing_observed": 73.6,
+              "seconds_to_webhook_received": 78.5,
+              "seconds_to_issue_written": 78.5,
+              "issue_files": [
+                "ScorePSIModerate.md"
+              ],
+              "events": [
+                "created",
+                "commented_resolved"
+              ]
+            },
+            "ScorePSISignificant": {
+              "seconds_to_psi_gauge_above_threshold": null,
+              "seconds_to_alert_pending": null,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            }
+          },
+          "alerts_active_before_injection": [],
+          "drift": {
+            "field": "transaction_amt",
+            "scale": 5.0
+          }
+        },
+        {
+          "t_inject_unix": 1793098347.827,
+          "psi_before_injection_max": 0.0034,
+          "psi_max_after_injection": 0.1646,
+          "alerts": {
+            "ScorePSIModerate": {
+              "seconds_to_psi_gauge_above_threshold": 42.7,
+              "seconds_to_alert_pending": 42.8,
+              "seconds_to_alert_firing_observed": 73.5,
+              "seconds_to_webhook_received": 77.8,
+              "seconds_to_issue_written": 77.8,
+              "issue_files": [
+                "ScorePSIModerate.md"
+              ],
+              "events": [
+                "created",
+                "commented_resolved"
+              ]
+            },
+            "ScorePSISignificant": {
+              "seconds_to_psi_gauge_above_threshold": null,
+              "seconds_to_alert_pending": null,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            }
+          },
+          "alerts_active_before_injection": [],
+          "drift": {
+            "field": "transaction_amt",
+            "scale": 5.0
+          }
+        },
+        {
+          "t_inject_unix": 1793098628.33,
+          "psi_before_injection_max": 0.0031,
+          "psi_max_after_injection": 0.1657,
+          "alerts": {
+            "ScorePSIModerate": {
+              "seconds_to_psi_gauge_above_threshold": 42.7,
+              "seconds_to_alert_pending": 42.3,
+              "seconds_to_alert_firing_observed": 72.6,
+              "seconds_to_webhook_received": 77.3,
+              "seconds_to_issue_written": 77.3,
+              "issue_files": [
+                "ScorePSIModerate.md"
+              ],
+              "events": [
+                "created",
+                "commented_resolved"
+              ]
+            },
+            "ScorePSISignificant": {
+              "seconds_to_psi_gauge_above_threshold": null,
+              "seconds_to_alert_pending": null,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            }
+          },
+          "alerts_active_before_injection": [],
+          "drift": {
+            "field": "transaction_amt",
+            "scale": 5.0
+          }
+        }
+      ],
+      "summary": {
+        "ScorePSIModerate": {
+          "runs_detected": 3,
+          "seconds_to_psi_gauge_above_threshold": {
+            "median": 42.7,
+            "min": 42.7,
+            "max": 43.7
+          },
+          "seconds_to_alert_pending": {
+            "median": 42.8,
+            "min": 42.3,
+            "max": 43.4
+          },
+          "seconds_to_alert_firing_observed": {
+            "median": 73.5,
+            "min": 72.6,
+            "max": 73.6
+          },
+          "seconds_to_webhook_received": {
+            "median": 77.8,
+            "min": 77.3,
+            "max": 78.5
+          },
+          "seconds_to_issue_written": {
+            "median": 77.8,
+            "min": 77.3,
+            "max": 78.5
+          }
+        },
+        "ScorePSISignificant": {
+          "runs_detected": 0
+        }
+      },
+      "example_issue_bodies": {
+        "ScorePSIModerate": "# [alert] ScorePSIModerate: score distribution drifted (PSI above 0.1)\n\nlabels: monitoring, alert:ScorePSIModerate\n\n---\n\n<!-- fraudrt-alert:ScorePSIModerate -->\n**Alert `ScorePSIModerate`** (warning) fired at `2026-10-27T10:49:00.63Z`; this issue was opened at `2026-10-27T10:49:05.660Z`.\n\nscore distribution drifted (PSI above 0.1)\n\nPSI of the last 5000 scores against the training reference is in the moderate band 0.1 to 0.25.\n\n### Values\n\n* value that triggered the rule: **0.141**\n* rule window: rolling window of 5000 transactions, for 30s\n* time window of interest: `2026-10-27T10:49:00.63Z` to `2026-10-27T10:49:05.660Z`\n\n### Readings when the alert arrived\n\n| metric | value |\n|---|---|\n| score PSI (rolling window) | 0.1348 |\n| alert rate (share of scored transactions) | 0.03456 |\n| p99 /score latency (s) | 0.004025 |\n| 5xx ratio | n/a |\n| consumer lag, transactions topic | 23 |\n| requests per second | 100.1 |\n\n### Features with the highest PSI now (rolling window vs training reference)\n\n| feature | PSI |\n|---|---|\n| `dow` | 4.905 |\n| `TransactionAmt` | 2.903 |\n| `log_amt` | 2.903 |\n| `amt_cents` | 1.491 |\n| `id_31` | 0.929 |\n\nSome features sit above 0.25 even in normal operation (see `docs/MODEL_CARD.md`), so compare with the table below.\n\n[Dashboard](http://localhost:3000/d/fraud-monitoring/fraud-monitoring?from=1793097240630&to=1793098445660)\n[Rule expression in Prometheus](http://4f95eb8a4fe6:9090/graph?g0.expr=fraud_score_psi+%3E+0.1+and+fraud_score_psi+%3C%3D+0.25&g0.tab=1)\n\n---\n**Comment:** Alert resolved at 2026-10-27T10:49:40.63Z.\n"
+      }
+    },
+    "email_domain_half_protonmail": {
+      "drift": {
+        "field": "p_emaildomain",
+        "value": "protonmail.com",
+        "fraction": 0.5
+      },
+      "runs": [
+        {
+          "drift": {
+            "field": "p_emaildomain",
+            "value": "protonmail.com",
+            "fraction": 0.5
+          },
+          "t_inject_unix": 1793100862.341,
+          "psi_before_injection_max": 0.0024,
+          "psi_max_after_injection": 0.0918,
+          "alerts": {
+            "ScorePSIModerate": {
+              "seconds_to_psi_gauge_above_threshold": null,
+              "seconds_to_alert_pending": null,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            },
+            "ScorePSISignificant": {
+              "seconds_to_psi_gauge_above_threshold": null,
+              "seconds_to_alert_pending": null,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            }
+          },
+          "alerts_active_before_injection": []
+        },
+        {
+          "drift": {
+            "field": "p_emaildomain",
+            "value": "protonmail.com",
+            "fraction": 0.5
+          },
+          "t_inject_unix": 1793101142.674,
+          "psi_before_injection_max": 0.0032,
+          "psi_max_after_injection": 0.0896,
+          "alerts": {
+            "ScorePSIModerate": {
+              "seconds_to_psi_gauge_above_threshold": null,
+              "seconds_to_alert_pending": null,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            },
+            "ScorePSISignificant": {
+              "seconds_to_psi_gauge_above_threshold": null,
+              "seconds_to_alert_pending": null,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            }
+          },
+          "alerts_active_before_injection": []
+        },
+        {
+          "drift": {
+            "field": "p_emaildomain",
+            "value": "protonmail.com",
+            "fraction": 0.5
+          },
+          "t_inject_unix": 1793101422.468,
+          "psi_before_injection_max": 0.0032,
+          "psi_max_after_injection": 0.0901,
+          "alerts": {
+            "ScorePSIModerate": {
+              "seconds_to_psi_gauge_above_threshold": null,
+              "seconds_to_alert_pending": null,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            },
+            "ScorePSISignificant": {
+              "seconds_to_psi_gauge_above_threshold": null,
+              "seconds_to_alert_pending": null,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            }
+          },
+          "alerts_active_before_injection": []
+        }
+      ],
+      "summary": {
+        "ScorePSIModerate": {
+          "runs_detected": 0
+        },
+        "ScorePSISignificant": {
+          "runs_detected": 0
+        }
+      },
+      "example_issue_bodies": {}
+    },
+    "email_domain_all_protonmail_critical_for30s": {
+      "drift": {
+        "field": "p_emaildomain",
+        "value": "protonmail.com",
+        "fraction": 1.0
+      },
+      "runs": [
+        {
+          "drift": {
+            "field": "p_emaildomain",
+            "value": "protonmail.com",
+            "fraction": 1.0
+          },
+          "t_inject_unix": 1793100003.877,
+          "psi_before_injection_max": 0.0,
+          "psi_max_after_injection": 0.3418,
+          "alerts": {
+            "ScorePSIModerate": {
+              "seconds_to_psi_gauge_above_threshold": 27.4,
+              "seconds_to_alert_pending": 26.8,
+              "seconds_to_alert_firing_observed": 106.8,
+              "seconds_to_webhook_received": 111.8,
+              "seconds_to_issue_written": 111.8,
+              "issue_files": [
+                "ScorePSIModerate.md"
+              ],
+              "events": [
+                "created"
+              ]
+            },
+            "ScorePSISignificant": {
+              "seconds_to_psi_gauge_above_threshold": 47.4,
+              "seconds_to_alert_pending": 46.8,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            }
+          },
+          "alerts_active_before_injection": []
+        },
+        {
+          "drift": {
+            "field": "p_emaildomain",
+            "value": "protonmail.com",
+            "fraction": 1.0
+          },
+          "t_inject_unix": 1793100293.016,
+          "psi_before_injection_max": 0.0027,
+          "psi_max_after_injection": 0.3509,
+          "alerts": {
+            "ScorePSIModerate": {
+              "seconds_to_psi_gauge_above_threshold": 32.7,
+              "seconds_to_alert_pending": 32.6,
+              "seconds_to_alert_firing_observed": 107.9,
+              "seconds_to_webhook_received": 112.7,
+              "seconds_to_issue_written": 112.7,
+              "issue_files": [
+                "ScorePSIModerate.md"
+              ],
+              "events": [
+                "created"
+              ]
+            },
+            "ScorePSISignificant": {
+              "seconds_to_psi_gauge_above_threshold": 47.7,
+              "seconds_to_alert_pending": 47.6,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            }
+          },
+          "alerts_active_before_injection": []
+        },
+        {
+          "drift": {
+            "field": "p_emaildomain",
+            "value": "protonmail.com",
+            "fraction": 1.0
+          },
+          "t_inject_unix": 1793100578.0,
+          "psi_before_injection_max": 0.0024,
+          "psi_max_after_injection": 0.3498,
+          "alerts": {
+            "ScorePSIModerate": {
+              "seconds_to_psi_gauge_above_threshold": 28.2,
+              "seconds_to_alert_pending": 27.6,
+              "seconds_to_alert_firing_observed": 108.1,
+              "seconds_to_webhook_received": 112.7,
+              "seconds_to_issue_written": 112.7,
+              "issue_files": [
+                "ScorePSIModerate.md"
+              ],
+              "events": [
+                "created"
+              ]
+            },
+            "ScorePSISignificant": {
+              "seconds_to_psi_gauge_above_threshold": 48.2,
+              "seconds_to_alert_pending": 47.6,
+              "seconds_to_alert_firing_observed": null,
+              "seconds_to_webhook_received": null,
+              "seconds_to_issue_written": null,
+              "issue_files": [],
+              "events": []
+            }
+          },
+          "alerts_active_before_injection": []
+        }
+      ],
+      "summary": {
+        "ScorePSIModerate": {
+          "runs_detected": 3,
+          "seconds_to_psi_gauge_above_threshold": {
+            "median": 28.2,
+            "min": 27.4,
+            "max": 32.7
+          },
+          "seconds_to_alert_pending": {
+            "median": 27.6,
+            "min": 26.8,
+            "max": 32.6
+          },
+          "seconds_to_alert_firing_observed": {
+            "median": 107.9,
+            "min": 106.8,
+            "max": 108.1
+          },
+          "seconds_to_webhook_received": {
+            "median": 112.7,
+            "min": 111.8,
+            "max": 112.7
+          },
+          "seconds_to_issue_written": {
+            "median": 112.7,
+            "min": 111.8,
+            "max": 112.7
+          }
+        },
+        "ScorePSISignificant": {
+          "runs_detected": 0,
+          "seconds_to_psi_gauge_above_threshold": {
+            "median": 47.7,
+            "min": 47.4,
+            "max": 48.2
+          },
+          "seconds_to_alert_pending": {
+            "median": 47.6,
+            "min": 46.8,
+            "max": 47.6
+          }
+        }
+      },
+      "example_issue_bodies": {
+        "ScorePSIModerate": "# [alert] ScorePSIModerate: score distribution drifted (PSI above 0.1)\n\nlabels: monitoring, alert:ScorePSIModerate\n\n---\n\n<!-- fraudrt-alert:ScorePSIModerate -->\n**Alert `ScorePSIModerate`** (warning) fired at `2026-10-27T11:21:50.63Z`; this issue was opened at `2026-10-27T11:21:55.661Z`.\n\nscore distribution drifted (PSI above 0.1)\n\nPSI of the last 5000 scores against the training reference is in the moderate band 0.1 to 0.25.\n\n### Values\n\n* value that triggered the rule: **0.156**\n* rule window: rolling window of 5000 transactions, for 30s\n* time window of interest: `2026-10-27T11:21:50.63Z` to `2026-10-27T11:21:55.661Z`\n\n### Readings when the alert arrived\n\n| metric | value |\n|---|---|\n| score PSI (rolling window) | 0.1283 |\n| alert rate (share of scored transactions) | 0.03939 |\n| p99 /score latency (s) | 0.009753 |\n| 5xx ratio | n/a |\n| consumer lag, transactions topic | 39 |\n| requests per second | 124.5 |\n\n### Features with the highest PSI now (rolling window vs training reference)\n\n| feature | PSI |\n|---|---|\n| `P_emaildomain` | 16.081 |\n| `dow` | 5.219 |\n| `uid_secs_since_last` | 1.579 |\n| `email_match` | 1.567 |\n| `id_31` | 0.887 |\n\nSome features sit above 0.25 even in normal operation (see `docs/MODEL_CARD.md`), so compare with the table below.\n\n[Dashboard](http://localhost:3000/d/fraud-monitoring/fraud-monitoring?from=1793099210630&to=1793100415661)\n[Rule expression in Prometheus](http://4f95eb8a4fe6:9090/graph?g0.expr=fraud_score_psi+%3E+0.1+and+fraud_score_psi+%3C%3D+0.25&g0.tab=1)\n"
+      },
+      "note": "First version of the rules: ScorePSISignificant had for: 30s. PSI stayed above 0.25 for less than 30 s in all 3 runs (peak ~0.35), so the critical alert went pending but never fired. Kept for transparency; the rule was then changed to for: 10s and the scenario re-run (see email_domain_all_protonmail)."
+    }
+  }
+}
