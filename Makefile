@@ -1,5 +1,6 @@
 .PHONY: setup lint format typecheck test check up down migrate prepare train bootstrap replay \
-        allocate monitor retrain parity loadtest figures reset demo clean
+        allocate monitor retrain parity loadtest figures reset demo clean monitoring-up monitoring-down \
+        alerting-experiment rules-check
 
 RETRAIN_DAY ?= 165
 LOAD_USERS ?= 32
@@ -31,7 +32,19 @@ up:  ## whole stack: Postgres, Redis, Redpanda, MLflow, migrations, API, stream 
 	docker compose up -d --build
 
 down:
-	docker compose down
+	docker compose --profile monitoring down
+
+monitoring-up:  ## opt-in: Prometheus, Alertmanager, Grafana (http://localhost:3000), issue receiver
+	mkdir -p work/issues
+	docker compose --profile monitoring up -d --build
+
+monitoring-down:
+	docker compose --profile monitoring stop prometheus alertmanager grafana alert-receiver
+
+rules-check:  ## promtool/amtool via Docker: rule syntax + unit tests
+	docker run --rm --entrypoint promtool -v $(PWD)/ops/prometheus:/p:ro prom/prometheus:v2.55.1 check rules /p/alerts.yml
+	docker run --rm --entrypoint promtool -v $(PWD)/ops/prometheus:/p:ro prom/prometheus:v2.55.1 test rules /p/alerts_test.yml
+	docker run --rm --entrypoint amtool -v $(PWD)/ops/alertmanager:/a:ro prom/alertmanager:v0.27.0 check-config /a/alertmanager.yml
 
 migrate:
 	uv run alembic upgrade head

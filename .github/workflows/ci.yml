@@ -60,5 +60,7 @@ jobs:
           context: .
           file: Dockerfile.mlflow
           push: false
-      - name: Validate compose file
-        run: docker compose config -q
+      - name: Validate compose file (including the monitoring profile)
+        run: docker compose --profile monitoring config -q
+      - name: Prometheus rules - promtool check and unit tests, Alertmanager config
+        run: make rules-check

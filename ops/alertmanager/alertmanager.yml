@@ -1,0 +1,17 @@
+route:
+  receiver: issue-webhook
+  group_by: [alertname]
+  group_wait: 5s
+  group_interval: 1m
+  repeat_interval: 12h
+
+receivers:
+  - name: issue-webhook
+    webhook_configs:
+      - url: http://alert-receiver:9200/alerts
+        send_resolved: true
+
+# A significant PSI shift already implies the moderate one: file one issue, not two.
+inhibit_rules:
+  - source_matchers: ['alertname="ScorePSISignificant"']
+    target_matchers: ['alertname="ScorePSIModerate"']

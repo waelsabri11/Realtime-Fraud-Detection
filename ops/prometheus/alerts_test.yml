@@ -1,0 +1,103 @@
+# promtool test rules ops/prometheus/alerts_test.yml
+rule_files:
+  - alerts.yml
+
+evaluation_interval: 5s
+
+tests:
+  - name: score PSI crosses 0.1 then 0.25
+    interval: 5s
+    input_series:
+      - series: 'fraud_score_psi'
+        values: '0.01+0x6 0.15+0x10 0.4+0x10'
+    alert_rule_test:
+      - eval_time: 20s
+        alertname: ScorePSIModerate
+        exp_alerts: []
+      - eval_time: 70s
+        alertname: ScorePSIModerate
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations:
+              summary: "score distribution drifted (PSI above 0.1)"
+              description: "PSI of the last 2000 scores against the training reference is in the moderate band 0.1 to 0.25."
+              value: "0.150"
+              window: "rolling window of 2000 transactions, for 30s"
+      - eval_time: 130s
+        alertname: ScorePSISignificant
+        exp_alerts:
+          - exp_labels: {severity: critical}
+            exp_annotations:
+              summary: "score distribution drifted (PSI above 0.25)"
+              description: "PSI of the last 2000 scores against the training reference is above 0.25: a significant shift, consider retraining."
+              value: "0.400"
+              window: "rolling window of 2000 transactions, for 30s"
+
+  - name: growing lag fires, a draining backlog does not
+    interval: 5s
+    input_series:
+      - series: 'fraud_consumer_lag_messages{topic="transactions",partition="0"}'
+        values: '0+100x80'
+      - series: 'fraud_consumer_lag_messages{topic="labels",partition="0"}'
+        values: '5000+0x80'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: ConsumerLagGrowing
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations:
+              summary: "stream worker is falling behind the transactions topic"
+              description: "More than 1000 unprocessed messages and the backlog has been growing for 2 minutes. A replay at speedup 0 triggers this by design."
+              value: "7200 messages behind"
+              window: "slope over 2m, for 2m"
+
+  - name: draining backlog is not growing
+    interval: 5s
+    input_series:
+      - series: 'fraud_consumer_lag_messages{topic="transactions",partition="0"}'
+        values: '9000-100x80'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: ConsumerLagGrowing
+        exp_alerts: []
+
+  - name: 5xx ratio
+    interval: 5s
+    input_series:
+      - series: 'fraud_api_requests_total{route="/score",method="POST",status="200"}'
+        values: '0+90x60'
+      - series: 'fraud_api_requests_total{route="/score",method="POST",status="503"}'
+        values: '0+10x60'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: ApiErrorRateHigh
+        exp_alerts:
+          - exp_labels: {severity: critical}
+            exp_annotations:
+              summary: "more than 5% of API requests fail with 5xx"
+              description: "5xx share of all API requests (includes 503 while no model is loaded)."
+              value: "10%"
+              window: "rate over 2m, for 1m"
+
+  - name: p99 latency
+    interval: 5s
+    input_series:
+      # 100 req/5s, all of them in the (0.05, 0.1] bucket
+      - series: 'fraud_api_request_duration_seconds_bucket{route="/score",le="0.025"}'
+        values: '0+0x60'
+      - series: 'fraud_api_request_duration_seconds_bucket{route="/score",le="0.1"}'
+        values: '0+100x60'
+      - series: 'fraud_api_request_duration_seconds_bucket{route="/score",le="+Inf"}'
+        values: '0+100x60'
+      - series: 'fraud_api_requests_total{route="/score",method="POST",status="200"}'
+        values: '0+100x60'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: ScoreLatencyP99High
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations:
+              summary: "p99 /score latency above 25 ms"
+              description: "The 99th percentile of server-side /score latency has been above 25 ms for 1 minute (README p99 under replay load: about 1 ms)."
+              value: "99.25ms"
+              window: "p99 over 1m, for 1m"

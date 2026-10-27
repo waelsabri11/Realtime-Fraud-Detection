@@ -59,16 +59,25 @@ def replay(
     speedup: Annotated[float, typer.Option(help="0 = as fast as possible")] = 0.0,
     limit: Annotated[int | None, typer.Option(help="only the first N transactions")] = None,
     wait: Annotated[bool, typer.Option(help="wait until the worker drained the topics")] = True,
+    rate: Annotated[float, typer.Option(help="transactions per wall second; 0 = off")] = 0.0,
+    drift_after: Annotated[
+        int | None, typer.Option(help="inject drift after N transactions")
+    ] = None,
+    drift_field: Annotated[str, typer.Option()] = "transaction_amt",
+    drift_scale: Annotated[float, typer.Option(help="multiply the drift field by this")] = 1.0,
+    out: Annotated[Path | None, typer.Option(help="write the summary here")] = None,
 ) -> None:
     """Publish the hold-out period (transactions + delayed labels) to Redpanda."""
     import time
 
     from fraudrt.streaming.kafka_util import group_lag
+    from fraudrt.streaming.replayer import DriftSpec
     from fraudrt.streaming.replayer import replay as do_replay
 
     s = get_settings()
     t0 = time.perf_counter()
-    summary = do_replay(s, speedup=speedup, limit=limit)
+    spec = DriftSpec(drift_after, drift_field, drift_scale) if drift_after is not None else None
+    summary = do_replay(s, speedup=speedup, limit=limit, rate=rate, drift=spec)
     typer.echo(summary)
     if wait:
         while (lag := group_lag(s)) > 0:
@@ -78,8 +87,10 @@ def replay(
         total = time.perf_counter() - t0
         summary["end_to_end_seconds"] = round(total, 1)
         summary["end_to_end_txn_per_second"] = round(summary["transactions"] / total, 1)
-        s.results_dir.mkdir(parents=True, exist_ok=True)
-        (s.results_dir / "replay.json").write_text(json.dumps(summary, indent=2))
+    target = out or s.results_dir / "replay.json"  # experiments pass --out: keep the demo's file
+    if wait or out is not None:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps(summary, indent=2))
 
 
 @app.command()
@@ -95,6 +106,14 @@ def serve(host: str = "0.0.0.0", port: int = 8000, workers: int = 1) -> None:
     import uvicorn
 
     uvicorn.run("fraudrt.api.app:app_factory", factory=True, host=host, port=port, workers=workers)
+
+
+@app.command()
+def alert_receiver(host: str = "0.0.0.0", port: int = 9200) -> None:
+    """Alertmanager webhook -> GitHub issue (dry-run unless ALERT_DRY_RUN=false)."""
+    import uvicorn
+
+    uvicorn.run("fraudrt.alerting.receiver:app_factory", factory=True, host=host, port=port)
 
 
 @app.command()

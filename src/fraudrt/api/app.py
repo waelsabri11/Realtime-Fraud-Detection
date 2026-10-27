@@ -10,7 +10,8 @@ from contextlib import asynccontextmanager
 from typing import Annotated, Any
 
 import redis
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query, Request, Response
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from fraudrt.api.schemas import HealthResponse, ModelInfo, ScoreRequest, ScoreResponse
 from fraudrt.api.scorer import Scorer
@@ -19,6 +20,7 @@ from fraudrt.config import Settings, get_settings
 from fraudrt.db.repo import Repository, make_engine
 from fraudrt.features.online import RedisFeatureStore
 from fraudrt.modeling.registry import ModelBundle, load_from_registry
+from fraudrt.observability import ApiMetrics, DriftRefresher, MetricsMiddleware
 
 log = logging.getLogger("fraudrt.api")
 
@@ -66,6 +68,9 @@ def create_app(
     sink: Sink | None = None,
 ) -> FastAPI:
     settings = settings or get_settings()
+    metrics = ApiMetrics(
+        settings.alert_score_threshold, settings.drift_window, settings.drift_min_samples
+    )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -76,18 +81,27 @@ def create_app(
         the_sink: Sink = sink or (BatchWriter(the_repo) if the_repo else NullSink())
         holder = ModelHolder(settings, bundle)
         holder.start_background_load()
+        refresher = DriftRefresher(
+            metrics,
+            lambda: holder.bundle.reference if holder.bundle else None,
+            settings.drift_interval_seconds,
+        )
+        refresher.start()
         app.state.scorer = Scorer(RedisFeatureStore(client, settings.feature_prefix))
         app.state.holder = holder
         app.state.redis = client
         app.state.repo = the_repo
         app.state.sink = the_sink
         yield
+        refresher.stop()
         holder.stop()
         the_sink.close()
 
     app = FastAPI(
         title="Real-time fraud scoring (replay-simulated)", version="0.1.0", lifespan=lifespan
     )
+    app.add_middleware(MetricsMiddleware, metrics=metrics)
+    app.state.metrics = metrics
 
     @app.post("/score", response_model=ScoreResponse, response_model_exclude_none=True)
     def score(
@@ -103,6 +117,10 @@ def create_app(
         scored = request.app.state.scorer.score(req, model)
         latency_ms = (time.perf_counter() - t0) * 1e3
         request.app.state.sink.submit(scored, latency_ms)
+        if scored.encoded is not None:
+            metrics.observe_scored(
+                scored.score, scored.encoded, scored.duplicate, model.name, model.version
+            )
         log.info(
             "score txn=%d p=%.4f dup=%s latency_ms=%.2f features_ms=%.2f redis_ms=%.2f model_ms=%.2f",
             req.transaction_id,
@@ -145,6 +163,10 @@ def create_app(
             redis=redis_ok,
             database=db_ok,
         )
+
+    @app.get("/metrics", include_in_schema=False)
+    def prometheus_metrics() -> Response:
+        return Response(generate_latest(metrics.registry), media_type=CONTENT_TYPE_LATEST)
 
     @app.post("/admin/reload")
     def reload_model(request: Request) -> dict[str, Any]:

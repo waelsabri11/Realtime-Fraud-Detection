@@ -47,6 +47,14 @@ class Settings(BaseSettings):
     high_amount_threshold: float = 500.0  # cases above this need a senior review
     high_amount_cost: int = 2
 
+    # --- monitoring ---
+    alert_score_threshold: float = 0.3  # score at/above which a transaction counts as an alert
+    drift_window: int = 2000  # rolling window (scored transactions) for the live PSI
+    drift_min_samples: int = 500
+    drift_interval_seconds: float = 5.0
+    worker_metrics_port: int = 9101  # 0 disables the worker's /metrics endpoint
+    lag_interval_seconds: float = 5.0
+
     # --- online store ---
     feature_prefix: str = "fs"
 

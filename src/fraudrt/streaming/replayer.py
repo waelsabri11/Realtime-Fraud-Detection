@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+from dataclasses import dataclass
 from typing import Any
 
 import pandas as pd
@@ -24,6 +25,23 @@ from fraudrt.streaming.kafka_util import ensure_topics
 from fraudrt.util import records
 
 log = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class DriftSpec:
+    """Synthetic covariate shift for the alerting experiment: from the `after`-th transaction on,
+    multiply one numeric request field by `scale`. The model and its reference are untouched."""
+
+    after: int
+    field: str = "transaction_amt"
+    scale: float = 1.0
+
+
+def apply_drift(value: bytes, spec: DriftSpec) -> bytes:
+    payload = json.loads(value)
+    if payload.get(spec.field) is not None:
+        payload[spec.field] = payload[spec.field] * spec.scale
+    return json.dumps(payload).encode()
 
 
 def build_events(raw: pd.DataFrame, settings: Settings) -> list[tuple[int, int, str, bytes, bytes]]:
@@ -52,7 +70,15 @@ def build_events(raw: pd.DataFrame, settings: Settings) -> list[tuple[int, int, 
     return events
 
 
-def replay(settings: Settings, speedup: float = 0.0, limit: int | None = None) -> dict[str, Any]:
+def replay(
+    settings: Settings,
+    speedup: float = 0.0,
+    limit: int | None = None,
+    rate: float = 0.0,
+    drift: DriftSpec | None = None,
+) -> dict[str, Any]:
+    """`rate` (transactions per wall second, 0 = off) paces by count instead of by event time;
+    `drift` shifts a field part-way through and records the wall-clock moment it started."""
     raw = load_raw(settings)
     if limit is not None:
         start = raw[raw["TransactionDT"] >= settings.replay_start_dt].index[0]
@@ -65,11 +91,21 @@ def replay(settings: Settings, speedup: float = 0.0, limit: int | None = None) -
     t_sim0 = events[0][0]
     wall0 = time.perf_counter()
     n_tx = n_lab = 0
+    drift_started: float | None = None
     for i, (ts, _, topic, key, value) in enumerate(events):
         if speedup > 0:
             ahead = (ts - t_sim0) / speedup - (time.perf_counter() - wall0)
             if ahead > 0:
                 time.sleep(ahead)
+        if rate > 0 and topic == settings.topic_transactions:
+            ahead = n_tx / rate - (time.perf_counter() - wall0)
+            if ahead > 0:
+                time.sleep(ahead)
+        if drift is not None and topic == settings.topic_transactions and n_tx >= drift.after:
+            if drift_started is None:
+                drift_started = time.time()
+                log.info("drift injected from transaction %d: %s", n_tx, drift)
+            value = apply_drift(value, drift)
         while True:
             try:
                 producer.produce(topic, value=value, key=key)
@@ -88,12 +124,19 @@ def replay(settings: Settings, speedup: float = 0.0, limit: int | None = None) -
         producer.produce(settings.topic_transactions, value=tick, partition=part)
     producer.flush()
     wall = time.perf_counter() - wall0
-    summary = {
+    summary: dict[str, Any] = {
         "transactions": n_tx,
         "labels": n_lab,
         "simulated_days": round((events[-1][0] - t_sim0) / 86_400, 1),
         "speedup": speedup,
         "wall_seconds": round(wall, 1),
     }
+    if drift is not None:
+        summary["drift"] = {
+            "field": drift.field,
+            "scale": drift.scale,
+            "after_transaction": drift.after,
+            "injected_at_unix": drift_started,
+        }
     log.info("replay published: %s", summary)
     return summary

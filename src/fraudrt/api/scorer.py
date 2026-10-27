@@ -6,6 +6,8 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
+import numpy as np
+
 from fraudrt.api.schemas import ScoreRequest
 from fraudrt.features.definitions import amount_cents, make_uid, stateless_features
 from fraudrt.features.online import RedisFeatureStore
@@ -21,6 +23,7 @@ class ScoredTransaction:
     duplicate: bool
     bundle: ModelBundle
     timings_ms: dict[str, float]
+    encoded: np.ndarray[Any, Any] | None = None
 
     @property
     def expected_loss(self) -> float:
@@ -57,6 +60,7 @@ class Scorer:
             score=score,
             duplicate=not first,
             bundle=bundle,
+            encoded=x[0],
             timings_ms={
                 "features": (t1 - t0) * 1e3,
                 "redis_read": (t2 - t1) * 1e3,

@@ -1,0 +1,71 @@
+# Thresholds are deliberately simple and local-demo sized; see docs/MODEL_CARD.md section 6.
+groups:
+  - name: fraud-scoring
+    rules:
+      - alert: ScoreLatencyP99High
+        expr: |
+          histogram_quantile(0.99,
+            sum by (le) (rate(fraud_api_request_duration_seconds_bucket{route="/score"}[1m]))
+          ) > 0.025
+          and sum(rate(fraud_api_requests_total{route="/score"}[1m])) > 1
+        for: 1m
+        labels: {severity: warning}
+        annotations:
+          summary: "p99 /score latency above 25 ms"
+          description: "The 99th percentile of server-side /score latency has been above 25 ms for 1 minute (README p99 under replay load: about 1 ms)."
+          value: '{{ $value | humanizeDuration }}'
+          window: "p99 over 1m, for 1m"
+
+      - alert: ApiErrorRateHigh
+        expr: |
+          sum(rate(fraud_api_requests_total{status=~"5.."}[2m]))
+            / sum(rate(fraud_api_requests_total[2m])) > 0.05
+        for: 1m
+        labels: {severity: critical}
+        annotations:
+          summary: "more than 5% of API requests fail with 5xx"
+          description: "5xx share of all API requests (includes 503 while no model is loaded)."
+          value: '{{ $value | humanizePercentage }}'
+          window: "rate over 2m, for 1m"
+
+      - alert: ConsumerLagGrowing
+        expr: |
+          sum(fraud_consumer_lag_messages{topic="transactions"}) > 1000
+          and deriv(sum(fraud_consumer_lag_messages{topic="transactions"})[2m:5s]) > 0
+        for: 2m
+        labels: {severity: warning}
+        annotations:
+          summary: "stream worker is falling behind the transactions topic"
+          description: "More than 1000 unprocessed messages and the backlog has been growing for 2 minutes. A replay at speedup 0 triggers this by design."
+          value: '{{ $value | printf "%.0f" }} messages behind'
+          window: "slope over 2m, for 2m"
+
+      - alert: ScorePSIModerate
+        expr: fraud_score_psi > 0.1 and fraud_score_psi <= 0.25
+        for: 30s
+        labels: {severity: warning}
+        annotations:
+          summary: "score distribution drifted (PSI above 0.1)"
+          description: "PSI of the last 2000 scores against the training reference is in the moderate band 0.1 to 0.25."
+          value: '{{ $value | printf "%.3f" }}'
+          window: "rolling window of 2000 transactions, for 30s"
+
+      - alert: ScorePSISignificant
+        expr: fraud_score_psi > 0.25
+        for: 30s
+        labels: {severity: critical}
+        annotations:
+          summary: "score distribution drifted (PSI above 0.25)"
+          description: "PSI of the last 2000 scores against the training reference is above 0.25: a significant shift, consider retraining."
+          value: '{{ $value | printf "%.3f" }}'
+          window: "rolling window of 2000 transactions, for 30s"
+
+      - alert: ScrapeTargetDown
+        expr: up == 0
+        for: 1m
+        labels: {severity: critical}
+        annotations:
+          summary: "a metrics endpoint is down"
+          description: "Prometheus cannot scrape {{ $labels.job }} ({{ $labels.instance }})."
+          value: '{{ $value }}'
+          window: "for 1m"

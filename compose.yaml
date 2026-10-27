@@ -98,6 +98,55 @@ services:
       migrate: {condition: service_completed_successfully}
     restart: unless-stopped
 
+  # --- live monitoring, opt-in: docker compose --profile monitoring up -d (make monitoring-up) ---
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    profiles: ["monitoring"]
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=2d"]
+    ports: ["9090:9090"]
+    volumes:
+      - ./ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./ops/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    profiles: ["monitoring"]
+    ports: ["9093:9093"]
+    volumes:
+      - ./ops/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+
+  # Anonymous read-only access is for this local demo only.
+  grafana:
+    image: grafana/grafana:11.3.0
+    profiles: ["monitoring"]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/fraud-monitoring.json
+    ports: ["3000:3000"]
+    volumes:
+      - ./ops/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./ops/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on: [prometheus]
+
+  # Alertmanager webhook -> GitHub issue. Dry-run (files in ./work/issues) unless
+  # ALERT_DRY_RUN=false and GITHUB_TOKEN / GITHUB_REPOSITORY are set in the environment.
+  alert-receiver:
+    <<: *app
+    profiles: ["monitoring"]
+    command: ["fraudrt", "alert-receiver"]
+    environment:
+      <<: *app-env
+      PROMETHEUS_URL: http://prometheus:9090
+      GRAFANA_URL: http://localhost:3000
+      ALERT_ISSUE_DIR: /issues
+      ALERT_DRY_RUN: ${ALERT_DRY_RUN:-true}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GITHUB_REPOSITORY: ${GITHUB_REPOSITORY:-}
+    ports: ["9200:9200"]
+    volumes:
+      - ./work/issues:/issues
+
   # Batch jobs that read the Kaggle CSVs (mounted read-only; never baked into the image).
   # docker compose --profile jobs run --rm replayer
   replayer:
